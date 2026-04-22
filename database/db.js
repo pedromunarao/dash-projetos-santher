@@ -6,8 +6,9 @@
  * A cada escrita o arquivo é salvo atomicamente.
  */
 
-const path = require('path');
-const fs   = require('fs');
+const path    = require('path');
+const fs      = require('fs');
+const bcrypt  = require('bcryptjs');
 
 const DB_PATH = path.join(__dirname, 'priority_manager.db');
 
@@ -30,6 +31,7 @@ async function initDb() {
 
   createSchema();
   seedDefaults();
+  seedAdminUser();
   persist(); // salva o arquivo já com o schema criado
 
   return db;
@@ -98,6 +100,13 @@ function createSchema() {
     CREATE TABLE IF NOT EXISTS areas (
       name TEXT PRIMARY KEY
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id        INTEGER PRIMARY KEY AUTOINCREMENT,
+      username  TEXT UNIQUE NOT NULL,
+      password  TEXT NOT NULL,
+      role      TEXT NOT NULL DEFAULT 'user'
+    );
   `);
 
   // Insere padrões de preferências se não existirem
@@ -144,6 +153,22 @@ function seedDefaults() {
       [s.key, s.label, s.color, s.position]
     );
   });
+
+}
+
+/* ============================================================
+   SEED ADMIN – cria admin padrão se não existir
+============================================================ */
+function seedAdminUser() {
+  const hash = bcrypt.hashSync('santher2026', 10);
+  const existing = get(`SELECT id FROM users WHERE username = 'admin'`);
+  if (existing) {
+    db.run(`UPDATE users SET password = ?, role = 'admin' WHERE username = 'admin'`, [hash]);
+  } else {
+    db.run(`INSERT INTO users (username, password, role) VALUES ('admin', ?, 'admin')`, [hash]);
+  }
+  persist();
+  console.log('  [Auth] Usuário admin configurado. Senha: santher2026');
 }
 
 /* ============================================================
@@ -186,4 +211,4 @@ function getNextTaskId() {
   return `TASK-${String(n).padStart(3, '0')}`;
 }
 
-module.exports = { initDb, all, get, run, getNextTaskId, persist };
+module.exports = { initDb, all, get, run, getNextTaskId, persist, bcrypt };

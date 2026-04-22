@@ -341,3 +341,94 @@
   transform: scale(1.25);
   border-color: #fff4;
 }
+
+/* ---- Seção Usuários ---- */
+.cad-user-add-row {
+  margin-bottom: 24px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cad-user-add-row .cad-add-input {
+  min-width: 160px;
+}
+
+.cad-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cad-user-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+
+.cad-user-row:hover {
+  border-color: var(--accent);
+}
+
+.cad-user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+
+.cad-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cad-user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-1);
+}
+
+.cad-user-role-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 3px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.cad-user-role-badge.admin {
+  background: rgba(99,102,241,0.18);
+  color: #a5b4fc;
+  border: 1px solid rgba(99,102,241,0.3);
+}
+
+.cad-user-role-badge.user {
+  background: rgba(16,185,129,0.12);
+  color: #6ee7b7;
+  border: 1px solid rgba(16,185,129,0.25);
+}
+
+.cad-user-self-badge {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 4px;
+}

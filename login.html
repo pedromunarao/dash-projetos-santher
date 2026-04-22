@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Login – Priority Manager Santher" />
+  <title>Login – Priority Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/pages/login.css" />
+</head>
+<body>
+
+  <!-- Fundo animado -->
+  <div class="login-bg"></div>
+
+  <!-- Wrapper central -->
+  <div class="login-wrapper">
+    <div class="login-card">
+
+      <!-- Header -->
+      <div class="login-header">
+        <div class="login-logo-wrap">
+          <img src="assets/santher_logo.png" alt="Santher" class="login-logo-img" />
+          <span class="login-brand">Priority<strong>Manager</strong></span>
+        </div>
+        <h1 class="login-title">Bem-vindo de volta</h1>
+        <p class="login-subtitle">Acesse o sistema de gerenciamento de projetos de TI</p>
+      </div>
+
+      <!-- Mensagem de erro -->
+      <div class="login-error" id="loginError" role="alert">
+        <span>⚠️</span>
+        <span id="loginErrorMsg">Usuário ou senha inválidos.</span>
+      </div>
+
+      <!-- Formulário -->
+      <form class="login-form" id="loginForm" novalidate>
+
+        <div class="login-field">
+          <label class="login-label" for="loginUsername">Usuário</label>
+          <div class="login-input-wrap">
+            <span class="login-input-icon">👤</span>
+            <input
+              type="text"
+              id="loginUsername"
+              class="login-input"
+              placeholder="Digite seu usuário"
+              autocomplete="username"
+              autocapitalize="none"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="login-field">
+          <label class="login-label" for="loginPassword">Senha</label>
+          <div class="login-input-wrap">
+            <span class="login-input-icon">🔒</span>
+            <input
+              type="password"
+              id="loginPassword"
+              class="login-input"
+              placeholder="Digite sua senha"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+        </div>
+
+        <button type="submit" class="login-btn" id="loginBtn">
+          <span class="btn-text">Entrar no Sistema</span>
+          <div class="spinner"></div>
+        </button>
+
+      </form>
+
+      <!-- Footer -->
+      <div class="login-footer">
+        Priority Manager · TI Santher<br>
+        Acesso restrito a usuários autorizados
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const form     = document.getElementById('loginForm');
+    const btn      = document.getElementById('loginBtn');
+    const errorBox = document.getElementById('loginError');
+    const errorMsg = document.getElementById('loginErrorMsg');
+    const userInp  = document.getElementById('loginUsername');
+    const passInp  = document.getElementById('loginPassword');
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorBox.classList.add('visible');
+      userInp.classList.add('error');
+      passInp.classList.add('error');
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      // Remove error on input
+      [userInp, passInp].forEach(el => {
+        el.addEventListener('input', () => {
+          errorBox.classList.remove('visible');
+          el.classList.remove('error');
+        }, { once: true });
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = userInp.value.trim();
+      const password = passInp.value;
+
+      if (!username || !password) {
+        showError('Preencha o usuário e a senha.');
+        return;
+      }
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+      errorBox.classList.remove('visible');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (res.ok) {
+          // Animação de saída antes de redirecionar
+          document.querySelector('.login-card').style.transition = 'opacity 0.3s, transform 0.3s';
+          document.querySelector('.login-card').style.opacity = '0';
+          document.querySelector('.login-card').style.transform = 'scale(0.97)';
+          setTimeout(() => { window.location.href = '/'; }, 300);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          showError(data.error || 'Usuário ou senha inválidos.');
+        }
+      } catch {
+        showError('Erro de conexão. Verifique o servidor.');
+      }
+    });
+
+    // Foco automático no campo de usuário
+    window.addEventListener('DOMContentLoaded', () => {
+      userInp.focus();
+    });
+  </script>
+
+</body>
+</html>

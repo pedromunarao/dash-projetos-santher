@@ -77,11 +77,15 @@
 
     </nav>
 
-    <!-- Rodapé: tema + versão -->
+    <!-- Rodapé: tema + versão + logout -->
     <div class="sidebar-footer">
       <button class="theme-toggle" id="themeToggle" title="Alternar tema">
         <span class="theme-icon">🌙</span>
         <span class="nav-label">Tema Escuro</span>
+      </button>
+      <button class="nav-item logout-btn" id="logoutBtn" title="Sair">
+        <span class="nav-icon">🚪</span>
+        <span class="nav-label">Sair</span>
       </button>
       <div class="sidebar-version">v1.0.0</div>
     </div>
@@ -98,6 +102,11 @@
       </div>
       <div class="topbar-right">
         <span class="current-date" id="currentDate"></span>
+        <div class="topbar-user" id="topbarUser">
+          <span class="topbar-user-icon">👤</span>
+          <span class="topbar-username" id="topbarUsername"></span>
+          <span class="topbar-role-badge" id="topbarRole"></span>
+        </div>
       </div>
     </header>
 
@@ -399,6 +408,9 @@
           <button class="cad-tab" data-section="kanban" id="cad-tab-kanban">
             🗂️ Buckets do Kanban
           </button>
+          <button class="cad-tab" data-section="usuarios" id="cad-tab-usuarios">
+            🔑 Usuários
+          </button>
         </div>
 
         <!-- =========================
@@ -525,6 +537,34 @@
           </div>
         </div>
 
+        <!-- =========================
+             SEÇÃO 5: USUÁRIOS (admin only)
+        ========================= -->
+        <div class="cad-section hidden" data-section="usuarios" id="cad-section-usuarios">
+          <div class="cad-section-card">
+            <div class="cad-section-card-header">
+              <h3>🔑 Gerenciamento de Usuários</h3>
+              <span class="cad-section-desc">Cadastre e remova usuários do sistema. Somente administradores podem acessar esta seção.</span>
+            </div>
+
+            <!-- Formulário de novo usuário -->
+            <div class="cad-add-row cad-user-add-row">
+              <input type="text" id="cad-new-user-username" class="cad-add-input"
+                placeholder="Nome de usuário" maxlength="40" autocapitalize="none" />
+              <input type="password" id="cad-new-user-password" class="cad-add-input"
+                placeholder="Senha" maxlength="100" />
+              <select id="cad-new-user-role" class="filter-select">
+                <option value="user">Usuário</option>
+                <option value="admin">Administrador</option>
+              </select>
+              <button class="btn btn-primary" id="cad-add-user-btn">✓ Criar Usuário</button>
+            </div>
+
+            <!-- Lista de usuários -->
+            <div class="cad-users-list" id="cad-users-list"></div>
+          </div>
+        </div>
+
       </div><!-- /page-cadastros -->
 
       <!-- ===== TV PAGE ===== -->
@@ -597,6 +637,7 @@
   <script src="js/core/constants.js"></script>
   <script src="js/core/store.js"></script>
   <script src="js/utils/helpers.js"></script>
+  <script src="js/modules/auth.js"></script>
   <script src="js/modules/dashboard.js"></script>
   <script src="js/modules/kanban.js"></script>
   <script src="js/modules/task-form.js"></script>

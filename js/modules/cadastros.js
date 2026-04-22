@@ -5,8 +5,9 @@
  *   2. Tipos de Recurso
  *   3. Recursos (pessoas)
  *   4. Buckets do Kanban
+ *   5. Usuários (admin only)
  *
- * Depende de: Store, UI, STATUSES, RESOURCE_STATUSES, getResourceStatusInfo,
+ * Depende de: Store, UI, Auth, STATUSES, RESOURCE_STATUSES, getResourceStatusInfo,
  *             escapeHtml (globals)
  */
 
@@ -19,6 +20,7 @@ const Cadastros = (() => {
     { key: 'types',    label: 'Tipos de Recurso',   icon: '🏷️' },
     { key: 'recursos', label: 'Recursos',            icon: '👥' },
     { key: 'kanban',   label: 'Buckets do Kanban',  icon: '🗂️' },
+    { key: 'usuarios', label: 'Usuários',           icon: '🔑' },
   ];
 
   /* ============================================================
@@ -348,6 +350,98 @@ const Cadastros = (() => {
   }
 
   /* ============================================================
+     SEÇÃO 5 — USUÁRIOS (admin only)
+  ============================================================ */
+  let _usersCache = [];
+
+  async function renderUsers() {
+    if (!Auth.isAdmin()) return;
+    const container = document.getElementById('cad-users-list');
+    if (!container) return;
+
+    try {
+      const res  = await fetch('/api/auth/users');
+      _usersCache = await res.json();
+    } catch {
+      container.innerHTML = `<p class="cad-empty">Erro ao carregar usuários.</p>`;
+      return;
+    }
+
+    const me = Auth.getCurrentUser();
+
+    if (_usersCache.length === 0) {
+      container.innerHTML = `<p class="cad-empty">Nenhum usuário cadastrado.</p>`;
+      return;
+    }
+
+    container.innerHTML = _usersCache.map(u => {
+      const initials = u.username.slice(0, 2).toUpperCase();
+      const isSelf   = u.id === me?.id;
+      return `
+        <div class="cad-user-row" id="cad-user-row-${u.id}">
+          <div class="cad-user-avatar">${initials}</div>
+          <div class="cad-user-info">
+            <div class="cad-user-name">
+              ${escapeHtml(u.username)}
+              ${isSelf ? `<span class="cad-user-self-badge">você</span>` : ''}
+            </div>
+            <span class="cad-user-role-badge ${u.role}">${u.role === 'admin' ? 'Administrador' : 'Usuário'}</span>
+          </div>
+          ${!isSelf ? `
+            <button class="btn btn-danger btn-sm" onclick="Cadastros.deleteUser(${u.id})">🗑️ Remover</button>
+          ` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  async function addUser() {
+    const usernameInp = document.getElementById('cad-new-user-username');
+    const passwordInp = document.getElementById('cad-new-user-password');
+    const roleInp     = document.getElementById('cad-new-user-role');
+
+    const username = (usernameInp?.value || '').trim();
+    const password = (passwordInp?.value || '').trim();
+    const role     = roleInp?.value || 'user';
+
+    if (!username || !password) {
+      UI.toast('Preencha o usuário e a senha.', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ username, password, role }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao criar usuário.');
+      usernameInp.value = '';
+      passwordInp.value = '';
+      await renderUsers();
+      UI.toast(`Usuário "${username}" criado com sucesso!`, 'success');
+    } catch (err) {
+      UI.toast('Erro: ' + err.message, 'error');
+    }
+  }
+
+  async function deleteUser(id) {
+    const u = _usersCache.find(x => x.id === id);
+    if (!u) return;
+    const ok = await UI.confirm('Remover Usuário', `Deseja remover o usuário "${u.username}"? Esta ação não pode ser desfeita.`);
+    if (!ok) return;
+    try {
+      const res = await fetch(`/api/auth/users/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao remover.');
+      await renderUsers();
+      UI.toast('Usuário removido.', 'info');
+    } catch (err) {
+      UI.toast('Erro: ' + err.message, 'error');
+    }
+  }
+
+  /* ============================================================
      NAVEGAÇÃO DE SEÇÕES
   ============================================================ */
   function switchSection(key) {
@@ -360,10 +454,11 @@ const Cadastros = (() => {
       sec.classList.toggle('hidden', sec.dataset.section !== key);
     });
 
-    if (key === 'areas')    renderAreas();
-    if (key === 'types')    renderTypes();
-    if (key === 'recursos') renderRecursos();
-    if (key === 'kanban')   renderKanban();
+    if (key === 'areas')     renderAreas();
+    if (key === 'types')     renderTypes();
+    if (key === 'recursos')  renderRecursos();
+    if (key === 'kanban')    renderKanban();
+    if (key === 'usuarios')  renderUsers();
   }
 
   /* ============================================================
@@ -417,11 +512,19 @@ const Cadastros = (() => {
         if (pick) pick.value = dot.dataset.color;
       });
     });
+
+    // Usuários (admin only)
+    document.getElementById('cad-add-user-btn')
+      ?.addEventListener('click', addUser);
+    document.getElementById('cad-new-user-username')
+      ?.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('cad-new-user-password')?.focus(); });
+    document.getElementById('cad-new-user-password')
+      ?.addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
   }
 
   return {
     init, render,
     // Expostos para eventos inline
-    deleteArea, openEditRecurso, removeRecurso, deleteBucket,
+    deleteArea, openEditRecurso, removeRecurso, deleteBucket, deleteUser,
   };
 })();

@@ -139,11 +139,48 @@ const App = (() => {
   }
 
   /* ============================================================
+     EXIBIR USUÁRIO LOGADO NA TOPBAR
+  ============================================================ */
+
+  function initUserDisplay() {
+    const user = Auth.getCurrentUser();
+    if (!user) return;
+
+    // Preenche nome do usuário na topbar
+    const nameEl = document.getElementById('topbarUsername');
+    if (nameEl) nameEl.textContent = user.username.toUpperCase();
+
+    // Badge de role
+    const roleEl = document.getElementById('topbarRole');
+    if (roleEl) {
+      roleEl.textContent = user.role === 'admin' ? 'ADMIN' : 'USER';
+      roleEl.className = `topbar-role-badge ${user.role}`;
+    }
+
+    // Esconde o nav de Cadastros de Usuários para não-admins
+    const navUsuarios = document.getElementById('nav-usuarios');
+    if (navUsuarios && !Auth.isAdmin()) navUsuarios.style.display = 'none';
+
+    // Mostra/esconde aba de Usuários no módulo Cadastros
+    const tabUsuarios = document.getElementById('cad-tab-usuarios');
+    if (tabUsuarios) {
+      tabUsuarios.style.display = Auth.isAdmin() ? '' : 'none';
+    }
+  }
+
+  /* ============================================================
      BOOT ASSÍNCRONO
   ============================================================ */
 
   async function init() {
     showLoader();
+
+    /* 0. Verifica sessão – redireciona para /login se não autenticado */
+    try {
+      await Auth.checkSession();
+    } catch {
+      return; // boot interrompido, redirecionamento já foi feito
+    }
 
     /* 1. Carrega todos os dados do banco via API */
     await Store.bootstrap();
@@ -155,6 +192,7 @@ const App = (() => {
     initSidebar();
     initTheme();
     initDate();
+    initUserDisplay();
 
     /* 4. Registra listeners de navegação */
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -167,6 +205,10 @@ const App = (() => {
       document.getElementById('editTaskId').value = '';
       navigate('new-task');
     });
+
+    /* 4b. Logout */
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => Auth.logout());
 
     /* 5. Inicializa módulos */
     Dashboard.init();

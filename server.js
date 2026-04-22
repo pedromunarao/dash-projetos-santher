@@ -6,15 +6,136 @@
  * Acesse em:    http://localhost:3000
  */
 
-const express = require('express');
-const path    = require('path');
-const db      = require('./database/db');
+const express        = require('express');
+const path           = require('path');
+const session        = require('express-session');
+const db             = require('./database/db');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
+
+/* ============================================================
+   SESSÃO
+============================================================ */
+app.use(session({
+  secret: 'santher-priority-manager-secret-2024',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    maxAge: 8 * 60 * 60 * 1000, // 8 horas
+  },
+}));
+
+/* ============================================================
+   SERVIR ARQUIVOS ESTÁTICOS
+   (login.html, css, js, assets – tudo público exceto index.html)
+============================================================ */
+app.use('/css',    express.static(path.join(__dirname, 'css')));
+app.use('/js',     express.static(path.join(__dirname, 'js')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+/* ============================================================
+   MIDDLEWARE: requireAuth
+   Aplica a todas as rotas /api/* (exceto /api/auth/*)
+============================================================ */
+function requireAuth(req, res, next) {
+  if (req.session && req.session.user) return next();
+  return res.status(401).json({ error: 'Não autenticado.' });
+}
+
+function requireAdmin(req, res, next) {
+  if (req.session?.user?.role === 'admin') return next();
+  return res.status(403).json({ error: 'Acesso restrito ao administrador.' });
+}
+
+/* ============================================================
+   ROTAS DE AUTENTICAÇÃO (públicas)
+============================================================ */
+
+// Login
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password)
+    return res.status(400).json({ error: 'Usuário e senha são obrigatórios.' });
+
+  const user = db.get(`SELECT * FROM users WHERE username = ?`, [username.trim().toLowerCase()]);
+  if (!user)
+    return res.status(401).json({ error: 'Usuário ou senha inválidos.' });
+
+  const match = db.bcrypt.compareSync(password, user.password);
+  if (!match)
+    return res.status(401).json({ error: 'Usuário ou senha inválidos.' });
+
+  req.session.user = { id: user.id, username: user.username, role: user.role };
+  res.json({ ok: true, user: req.session.user });
+});
+
+// Logout
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.json({ ok: true });
+  });
+});
+
+// Usuário atual
+app.get('/api/auth/me', (req, res) => {
+  if (req.session?.user) return res.json({ user: req.session.user });
+  return res.status(401).json({ error: 'Não autenticado.' });
+});
+
+// Cadastrar usuário (apenas admin)
+app.post('/api/auth/register', requireAuth, requireAdmin, (req, res) => {
+  const { username, password, role } = req.body;
+  if (!username || !password)
+    return res.status(400).json({ error: 'Usuário e senha são obrigatórios.' });
+
+  const clean = username.trim().toLowerCase();
+  const existing = db.get(`SELECT id FROM users WHERE username = ?`, [clean]);
+  if (existing)
+    return res.status(409).json({ error: 'Usuário já existe.' });
+
+  const hash = db.bcrypt.hashSync(password, 10);
+  const validRole = role === 'admin' ? 'admin' : 'user';
+  db.run(`INSERT INTO users (username, password, role) VALUES (?, ?, ?)`, [clean, hash, validRole]);
+  const newUser = db.get(`SELECT id, username, role FROM users WHERE username = ?`, [clean]);
+  res.status(201).json({ user: newUser });
+});
+
+// Listar usuários (apenas admin)
+app.get('/api/auth/users', requireAuth, requireAdmin, (req, res) => {
+  const users = db.all(`SELECT id, username, role FROM users ORDER BY username ASC`);
+  res.json(users);
+});
+
+// Excluir usuário (apenas admin, não pode excluir a si mesmo)
+app.delete('/api/auth/users/:id', requireAuth, requireAdmin, (req, res) => {
+  const targetId = Number(req.params.id);
+  if (targetId === req.session.user.id)
+    return res.status(400).json({ error: 'Você não pode excluir seu próprio usuário.' });
+
+  const info = db.run(`DELETE FROM users WHERE id = ?`, [targetId]);
+  if (info.changes === 0) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  res.json({ ok: true });
+});
+
+/* ============================================================
+   ROTA: servir login.html (público)
+============================================================ */
+app.get('/login', (req, res) => {
+  if (req.session?.user) return res.redirect('/');
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+/* ============================================================
+   APPLY requireAuth em todas as /api/* (exceto /api/auth/*)
+============================================================ */
+app.use('/api', (req, res, next) => {
+  if (req.path.startsWith('/auth/')) return next();
+  return requireAuth(req, res, next);
+});
 
 /* ============================================================
    HELPERS
@@ -288,9 +409,10 @@ app.put('/api/prefs/:key', (req, res) => {
 });
 
 /* ============================================================
-   FALLBACK → index.html (SPA)
+   FALLBACK → index.html (SPA com guarda de autenticação)
 ============================================================ */
 app.get(/^(?!\/api).*/, (req, res) => {
+  if (!req.session?.user) return res.redirect('/login');
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
