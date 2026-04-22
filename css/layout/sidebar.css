@@ -1,0 +1,395 @@
+/* =============================================================
+   LAYOUT / SIDEBAR
+   Navegação lateral premium com grupos, CTA, sub-items,
+   colapso animado e tooltips nativos.
+   ============================================================= */
+
+/* ---- Estrutura base ---- */
+.sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--glass-bar);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transition: width var(--transition), transform var(--transition);
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+}
+
+.sidebar.collapsed { width: var(--sidebar-collapsed); }
+
+/* ---- Cabeçalho ---- */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px;
+  border-bottom: 1px solid var(--border);
+  min-height: 72px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.logo-img {
+  height: 46px;
+  width: auto;
+  max-width: 148px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 6px;
+  padding: 3px 8px;
+  transition: opacity var(--transition), max-width var(--transition), padding var(--transition);
+}
+
+.sidebar.collapsed .logo-img {
+  max-width: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.logo-text {
+  font-size: 0.85rem;
+  color: var(--text-3);
+  white-space: nowrap;
+  transition: opacity var(--transition);
+  letter-spacing: 0.3px;
+}
+
+.logo-text strong { color: var(--accent); }
+
+.sidebar.collapsed .logo-text {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+}
+
+/* ---- Botão de toggle ---- */
+.sidebar-toggle {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  border-radius: 50%;
+  width: 28px; height: 28px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition), color var(--transition);
+  cursor: pointer;
+}
+
+.sidebar-toggle:hover { background: var(--accent); color: #fff; }
+
+.toggle-icon { transition: transform var(--transition); display: inline-block; }
+.sidebar.collapsed .toggle-icon { transform: rotate(180deg); }
+
+/* ================================================================
+   CTA – NOVA TAREFA
+   Botão de ação principal no topo da navegação.
+   ================================================================ */
+
+.sidebar-cta-wrap {
+  padding: 12px 10px 8px;
+  flex-shrink: 0;
+}
+
+/* O CTA tem as classes nav-item + nav-cta */
+.nav-cta {
+  justify-content: center;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-h) 100%) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.38);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition) !important;
+  transform: none !important;
+}
+
+.nav-cta:hover {
+  background: linear-gradient(135deg, var(--accent-h) 0%, #3730a3 100%) !important;
+  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.55) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* CTA colapsado — ícone centrado, fundo mais suave */
+.sidebar.collapsed .nav-cta {
+  background: rgba(99, 102, 241, 0.18) !important;
+  color: var(--accent) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  padding: 10px 0 !important;
+}
+
+/* ================================================================
+   NAVEGAÇÃO AGRUPADA
+   ================================================================ */
+
+.sidebar-nav {
+  flex: 1;
+  padding: 6px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.sidebar-nav::-webkit-scrollbar { display: none; }
+
+/* ---- Grupo de itens ---- */
+.nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-bottom: 4px;
+}
+
+/* Separador entre grupos */
+.nav-group + .nav-group {
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+/* Rótulo da seção (ex: "VISÃO GERAL") */
+.nav-group-label {
+  font-size: 0.63rem;
+  font-weight: 800;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 1.1px;
+  padding: 4px 12px 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity var(--transition), max-height var(--transition), padding var(--transition);
+  max-height: 22px;
+}
+
+/* Ocultar rótulo quando colapsado */
+.sidebar.collapsed .nav-group-label {
+  opacity: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+/* ================================================================
+   ITENS DE NAVEGAÇÃO
+   ================================================================ */
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background var(--transition), color var(--transition),
+              transform var(--transition), box-shadow var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+  text-decoration: none;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  transform: translateX(3px);
+}
+
+/* Estado ativo: fundo suave + borda esquerda colorida */
+.nav-item.active {
+  background: rgba(99, 102, 241, 0.13);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 18%; bottom: 18%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+/* Ícone */
+.nav-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Rótulo de texto */
+.nav-label {
+  transition: opacity var(--transition);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Sub-item (ex: Configurar dentro do grupo Kanban) ---- */
+.nav-item--sub {
+  padding-left: 22px;
+  font-size: 0.82rem;
+  color: var(--text-3);
+  font-weight: 400;
+}
+
+.nav-item--sub .nav-icon {
+  font-size: 0.92rem;
+  opacity: 0.75;
+}
+
+.nav-item--sub:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav-item--sub.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Quando colapsado: remover indentação do sub-item */
+.sidebar.collapsed .nav-item--sub {
+  padding-left: 0;
+}
+
+.sidebar.collapsed .nav-item--sub .nav-icon {
+  opacity: 1;
+}
+
+/* ================================================================
+   ESTADO COLAPSADO
+   ================================================================ */
+
+/* Centralizar ícones quando colapsado */
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+  transform: none !important;
+}
+
+/* Ocultar rótulos */
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+  width: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Ocultar borda activa quando colapsado (fica estranho) */
+.sidebar.collapsed .nav-item.active::before {
+  top: 10%; bottom: 10%;
+}
+
+/* ================================================================
+   RODAPÉ
+   ================================================================ */
+
+.sidebar-footer {
+  padding: 10px 8px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 0.875rem;
+  font-weight: 500;
+  width: 100%;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.theme-icon {
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+
+.sidebar.collapsed .theme-toggle {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar.collapsed .sidebar-footer .nav-label {
+  opacity: 0;
+  width: 0;
+}
+
+.sidebar-version {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  padding: 2px 12px 2px;
+  transition: opacity var(--transition);
+  white-space: nowrap;
+}
+
+.sidebar.collapsed .sidebar-version { opacity: 0; }
+
+/* ================================================================
+   MOBILE
+   ================================================================ */
+
+@media (max-width: 700px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform var(--transition), width var(--transition);
+    width: var(--sidebar-w) !important; /* força largura total no mobile */
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+}

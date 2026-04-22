@@ -1,0 +1,76 @@
+/* =============================================================
+   PAGES / RESOURCES
+   Grade de cards de recursos com status e tarefas alocadas.
+   ============================================================= */
+
+/* ---- Cabeçalho da página ---- */
+.resources-header { margin-bottom: 20px; }
+
+/* ---- Card do formulário inline ---- */
+.resource-form-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.resource-form-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 18px; }
+
+/* ---- Grade de recursos ---- */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* ---- Card de recurso ---- */
+.resource-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.resource-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+
+.resource-card-header { display: flex; align-items: flex-start; justify-content: space-between; }
+
+.resource-card-name { font-size: 1rem;    font-weight: 700; color: var(--text);  }
+.resource-card-type { font-size: 0.78rem; color: var(--text-3); margin-top: 2px; }
+
+/* ---- Tarefas vinculadas ---- */
+.resource-tasks-count {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resource-tasks-list { display: flex; flex-direction: column; gap: 4px; }
+
+.resource-task-pill {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resource-task-pill .pill-id {
+  font-family: monospace;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* ---- Ações do card ---- */
+.resource-card-actions { display: flex; gap: 8px; }

@@ -1,0 +1,178 @@
+/**
+ * modules/task-form.js
+ * Formulário de criação e edição de tarefas.
+ * Inclui: validação, resource picker e sugestão de prioridade.
+ *
+ * Depende de: Store, UI, Dashboard, Kanban, App (globals)
+ */
+
+const TaskForm = (() => {
+
+  let currentEditId = null;
+
+  /* ---- Preenche selects estáticos ---- */
+  function populateSelects() {
+    document.getElementById('taskStatus').innerHTML =
+      STATUSES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
+
+    document.getElementById('taskArea').innerHTML =
+      '<option value="">Selecione a área</option>' +
+      Store.getAreas().map(a => `<option value="${a}">${a}</option>`).join('');
+  }
+
+  /* ---- Constrói o picker de recursos ---- */
+  function buildResourcePicker(selectedResources = []) {
+    const resources = Store.getResources();
+    const picker    = document.getElementById('resourcesPicker');
+
+    if (resources.length === 0) {
+      picker.innerHTML = '<span style="color:var(--text-3);font-size:0.82rem">Nenhum recurso cadastrado ainda.</span>';
+      return;
+    }
+
+    picker.innerHTML = resources.map(r => {
+      const checked = selectedResources.includes(r.name);
+      return `
+      <label class="resource-checkbox-item ${checked ? 'checked' : ''}" data-name="${escapeHtml(r.name)}">
+        <input type="checkbox" value="${escapeHtml(r.name)}" ${checked ? 'checked' : ''} />
+        ${escapeHtml(r.name)} <span style="opacity:.6;font-size:0.7rem">(${escapeHtml(r.type)})</span>
+      </label>`;
+    }).join('');
+
+    picker.querySelectorAll('.resource-checkbox-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const cb = item.querySelector('input');
+        cb.checked = !cb.checked;
+        item.classList.toggle('checked', cb.checked);
+      });
+    });
+  }
+
+  /* ---- Retorna recursos selecionados ---- */
+  function getSelectedResources() {
+    return Array.from(document.querySelectorAll('#resourcesPicker input:checked')).map(cb => cb.value);
+  }
+
+  /* ---- Próxima prioridade sugerida ---- */
+  function getNextPriority() {
+    const tasks = Store.getTasks();
+    return tasks.length === 0 ? 0 : Math.max(...tasks.map(t => t.priority)) + 1;
+  }
+
+  /* ---- Abre formulário para NOVA tarefa ---- */
+  function openNew() {
+    currentEditId = null;
+    document.getElementById('formTitle').textContent   = 'Nova Tarefa';
+    document.getElementById('formTaskId').textContent  = '';
+    document.getElementById('taskForm').reset();
+    document.getElementById('editTaskId').value        = '';
+    document.getElementById('taskPriority').value      = getNextPriority();
+    populateSelects();
+    buildResourcePicker([]);
+    App.navigate('new-task');
+  }
+
+  /* ---- Abre formulário para EDIÇÃO ---- */
+  function openEdit(id) {
+    const task = Store.getTask(id);
+    if (!task) return;
+
+    currentEditId = id;
+    document.getElementById('formTitle').textContent   = 'Editar Tarefa';
+    document.getElementById('formTaskId').textContent  = task.id;
+    document.getElementById('editTaskId').value        = task.id;
+
+    populateSelects();
+
+    document.getElementById('taskTitle').value        = task.title;
+    document.getElementById('taskPriority').value     = task.priority;
+    document.getElementById('taskStatus').value       = task.status;
+    document.getElementById('taskArea').value         = task.area;
+    document.getElementById('taskSolicitor').value    = task.solicitor;
+    document.getElementById('taskDueDate').value      = task.dueDate || '';
+    document.getElementById('taskDescription').value  = task.description || '';
+    document.getElementById('taskNotes').value        = task.notes || '';
+
+    buildResourcePicker(task.resources || []);
+    App.navigate('new-task');
+  }
+
+  /* ---- Validação ---- */
+  function validate() {
+    let ok = true;
+
+    [
+      { id: 'taskTitle'     },
+      { id: 'taskStatus'    },
+      { id: 'taskArea'      },
+      { id: 'taskSolicitor' },
+    ].forEach(({ id }) => {
+      const el = document.getElementById(id);
+      const valid = el.value.trim() !== '';
+      el.classList.toggle('error', !valid);
+      if (!valid) ok = false;
+    });
+
+    const prio = document.getElementById('taskPriority');
+    const prioValid = prio.value !== '' && !isNaN(parseInt(prio.value)) && parseInt(prio.value) >= 0;
+    prio.classList.toggle('error', !prioValid);
+    if (!prioValid) ok = false;
+
+    return ok;
+  }
+
+  /* ---- Submit ---- */
+  async function onSubmit(e) {
+    e.preventDefault();
+    if (!validate()) { UI.toast('Preencha os campos obrigatórios.', 'error'); return; }
+
+    const btn = document.getElementById('submitForm');
+    btn.disabled = true;
+    btn.textContent = 'Salvando...';
+
+    const data = {
+      title:       document.getElementById('taskTitle').value.trim(),
+      priority:    parseInt(document.getElementById('taskPriority').value),
+      status:      document.getElementById('taskStatus').value,
+      area:        document.getElementById('taskArea').value,
+      solicitor:   document.getElementById('taskSolicitor').value.trim(),
+      dueDate:     document.getElementById('taskDueDate').value,
+      description: document.getElementById('taskDescription').value.trim(),
+      notes:       document.getElementById('taskNotes').value.trim(),
+      resources:   getSelectedResources(),
+    };
+
+    try {
+      if (currentEditId) {
+        await Store.updateTask(currentEditId, data);
+        UI.toast('Tarefa atualizada com sucesso!', 'success');
+      } else {
+        await Store.addTask(data);
+        UI.toast('Tarefa criada com sucesso!', 'success');
+      }
+      Dashboard.render();
+      Kanban.render();
+      App.navigate('tv');
+    } catch (err) {
+      UI.toast('Erro ao salvar tarefa: ' + err.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Salvar Tarefa';
+    }
+  }
+
+  /* ---- Init ---- */
+  function init() {
+    populateSelects();
+    document.getElementById('taskForm').addEventListener('submit', onSubmit);
+    document.getElementById('cancelForm').addEventListener('click', () => App.navigate('tv'));
+
+    ['taskTitle', 'taskPriority', 'taskStatus', 'taskArea', 'taskSolicitor'].forEach(id => {
+      const el = document.getElementById(id);
+      el.addEventListener('input',  () => el.classList.remove('error'));
+      el.addEventListener('change', () => el.classList.remove('error'));
+    });
+  }
+
+  return { init, openNew, openEdit };
+})();

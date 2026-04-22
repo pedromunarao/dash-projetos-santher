@@ -1,0 +1,343 @@
+/* =============================================================
+   pages/cadastros.css
+   Estilos da tela unificada de Cadastros
+   ============================================================= */
+
+/* ---- Header da página ---- */
+.cad-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.cad-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin: 0 0 4px;
+}
+.cad-header-desc {
+  color: var(--text-3);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* ---- Tabs de seção ---- */
+.cad-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+  background: var(--bg-2);
+  border-radius: 12px;
+  padding: 6px;
+  flex-wrap: wrap;
+}
+.cad-tab {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.cad-tab:hover {
+  background: var(--bg-3);
+  color: var(--text-1);
+}
+.cad-tab.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+
+/* ---- Card de seção ---- */
+.cad-section-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.cad-section-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.cad-section-card-header h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-1);
+  margin: 0 0 4px;
+}
+.cad-section-desc {
+  color: var(--text-3);
+  font-size: 0.8rem;
+  display: block;
+}
+
+/* ---- Área de chips (áreas e tipos) ---- */
+.cad-chips-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 48px;
+  margin-bottom: 20px;
+  padding: 4px 0;
+}
+.cad-chip-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px 6px 10px;
+  transition: all 0.2s;
+}
+.cad-chip-item:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+.cad-chip-icon {
+  font-size: 0.85rem;
+}
+.cad-chip-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-1);
+  letter-spacing: 0.02em;
+}
+.cad-chip-del {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-3);
+  font-size: 0.7rem;
+  padding: 0 0 0 4px;
+  transition: color 0.15s;
+  line-height: 1;
+}
+.cad-chip-del:hover {
+  color: var(--danger);
+}
+.cad-empty {
+  color: var(--text-3);
+  font-style: italic;
+  font-size: 0.875rem;
+  padding: 8px 0;
+}
+
+/* ---- Linha de adição (input + botão) ---- */
+.cad-add-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.cad-add-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  color: var(--text-1);
+  font-size: 0.875rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.cad-add-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* ---- Seção Recursos ---- */
+.cad-rec-form-card {
+  background: var(--bg-2);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.cad-recursos-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+.cad-recursos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.cad-resource-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  transition: all 0.2s;
+}
+.cad-resource-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+.cad-resource-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.cad-resource-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.cad-resource-info {
+  flex: 1;
+  min-width: 0;
+}
+.cad-resource-name {
+  font-weight: 600;
+  color: var(--text-1);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cad-resource-type {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.cad-resource-tasks {
+  font-size: 0.78rem;
+  color: var(--text-2);
+  margin-bottom: 14px;
+  padding: 6px 10px;
+  background: var(--bg-3);
+  border-radius: 8px;
+}
+.cad-resource-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.cad-empty-full {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px;
+  color: var(--text-3);
+  font-size: 0.9rem;
+}
+
+/* ---- Seção Buckets do Kanban ---- */
+.cad-kanban-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.cad-bucket-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: grab;
+  transition: all 0.2s;
+}
+.cad-bucket-row:hover,
+.cad-bucket-row.drag-over {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+.cad-bucket-row.dragging {
+  opacity: 0.45;
+}
+.cad-bucket-drag {
+  color: var(--text-3);
+  font-size: 1.1rem;
+  cursor: grab;
+  flex-shrink: 0;
+}
+.cad-bucket-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cad-bucket-label {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-1);
+}
+.cad-bucket-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cad-bucket-color-pick {
+  width: 32px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  cursor: pointer;
+  padding: 2px;
+}
+
+/* Add row com color picker inline para buckets */
+.cad-bucket-add-row {
+  margin-bottom: 16px;
+}
+
+/* Paleta de cores */
+.cad-palette-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cad-palette-label {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.cad-palette-dots {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cad-bucket-preset-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+.cad-bucket-preset-dot:hover {
+  transform: scale(1.25);
+  border-color: #fff4;
+}

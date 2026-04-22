@@ -1,0 +1,99 @@
+/* =============================================================
+   PAGES / REPORTS
+   Gráficos de barra, tabelas e exportação CSV.
+   ============================================================= */
+
+/* ---- Toolbar ---- */
+.reports-toolbar {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---- Grid de cards ---- */
+.reports-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.report-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.report-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Tabelas ---- */
+.report-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+
+.report-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.report-table td                  { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text-2); }
+.report-table tr:last-child td    { border-bottom: none; }
+.report-table tr:hover td         { background: var(--bg-3); }
+
+/* Span full width */
+.span-2 { grid-column: span 2; }
+
+/* ---- Gráfico de barras ---- */
+.bar-chart { display: flex; flex-direction: column; gap: 8px; }
+
+.bar-row   { display: flex; align-items: center; gap: 10px; }
+
+.bar-label {
+  font-size: 0.75rem;
+  color: var(--text-2);
+  width: 130px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  flex: 1;
+  background: var(--bg-3);
+  border-radius: 4px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-2);
+  min-width: 24px;
+  text-align: right;
+}
+
+/* ---- Responsivo ---- */
+@media (max-width: 900px) {
+  .reports-content      { grid-template-columns: 1fr; }
+  .reports-content .span-2 { grid-column: 1; }
+}

@@ -1,0 +1,51 @@
+/* =============================================================
+   COMPONENTS / BUTTONS
+   Sistema de botões reutilizáveis com variantes.
+   ============================================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: none;
+  transition: all var(--transition);
+  outline: none;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.btn:active {
+  transform: scale(0.96);
+}
+
+/* Variantes */
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--accent-h);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.btn-ghost {
+  background: var(--bg-3);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg-4); color: var(--text); transform: translateY(-1px); }
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.btn-danger:hover { background: var(--danger); color: #fff; }
+
+/* Tamanho reduzido */
+.btn-sm { padding: 5px 12px; font-size: 0.8rem; }

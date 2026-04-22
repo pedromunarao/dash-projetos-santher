@@ -1,0 +1,698 @@
+/* =============================================================
+   PAGES / KANBAN-CONFIG
+   Gerenciamento premium de colunas (buckets) do Kanban.
+   ============================================================= */
+
+/* ---- Cabeçalho da página ---- */
+.kconfig-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.kconfig-header h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.3px;
+}
+
+.kconfig-desc {
+  font-size: 0.84rem;
+  color: var(--text-3);
+  margin: 0;
+}
+
+.kconfig-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---- Barra de estatísticas ---- */
+.kconfig-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.kconfig-stat-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all var(--transition);
+}
+
+.kconfig-stat-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.kconfig-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.kconfig-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+
+.kconfig-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  margin-top: 2px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ---- Info banner ---- */
+.kconfig-info {
+  background: rgba(99, 102, 241, 0.07);
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  margin-bottom: 16px;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+/* ---- Preview de kanban ---- */
+.kconfig-preview-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  min-height: 50px;
+  align-items: center;
+}
+
+.kconfig-preview-col {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  transition: transform var(--transition), box-shadow var(--transition);
+  cursor: default;
+}
+
+.kconfig-preview-col:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.kconfig-preview-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.kconfig-preview-count {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ---- Lista de buckets ---- */
+.kconfig-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+/* ---- Estado vazio ---- */
+.kconfig-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-3);
+}
+
+.kconfig-empty-icon {
+  font-size: 3rem;
+  margin-bottom: 16px;
+}
+
+.kconfig-empty h3 {
+  font-size: 1.1rem;
+  color: var(--text-2);
+  margin: 0 0 8px;
+}
+
+.kconfig-empty p {
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/* ---- Linha de bucket ---- */
+.kconfig-row {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 26px 28px 22px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  transition: background var(--transition), box-shadow var(--transition),
+              transform var(--transition), opacity var(--transition),
+              border-color var(--transition);
+  cursor: default;
+}
+
+.kconfig-row:hover {
+  background: var(--bg-3);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: var(--shadow-sm);
+}
+
+.kconfig-row--editing {
+  background: var(--bg-3);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  grid-template-columns: 26px 28px 42px 1fr auto auto;
+}
+
+.kconfig-row--dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+
+.kconfig-row--dragover {
+  border-color: var(--accent);
+  background: rgba(99, 102, 241, 0.06);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+/* ---- Handle de drag ---- */
+.kconfig-drag-handle {
+  font-size: 1.1rem;
+  color: var(--text-3);
+  cursor: grab;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition: opacity var(--transition);
+  width: 26px;
+  text-align: center;
+  letter-spacing: -2px;
+}
+
+.kconfig-row:hover .kconfig-drag-handle {
+  opacity: 1;
+}
+
+.kconfig-drag-handle:active {
+  cursor: grabbing;
+}
+
+.kconfig-drag-handle--disabled {
+  cursor: not-allowed;
+  opacity: 0.2;
+}
+
+/* ---- Índice ---- */
+.kconfig-row-index {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-3);
+  background: var(--bg-4);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ---- Swatch de cor ---- */
+.kconfig-row-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.kconfig-row:hover .kconfig-row-swatch {
+  transform: scale(1.15);
+}
+
+/* ---- Info principal ---- */
+.kconfig-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.kconfig-row-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
+}
+
+.kconfig-row-key {
+  font-size: 0.68rem;
+  color: var(--text-3);
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Barra de progresso de tarefas */
+.kconfig-row-bar {
+  height: 3px;
+  background: var(--bg-4);
+  border-radius: 99px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.kconfig-row-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  opacity: 0.75;
+}
+
+/* ---- Contagens ---- */
+.kconfig-row-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.kconfig-row-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-3);
+  white-space: nowrap;
+  padding: 3px 10px;
+  background: var(--bg-4);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  transition: all var(--transition);
+}
+
+.kconfig-row-count.has-tasks {
+  font-weight: 800;
+}
+
+.kconfig-row-overdue {
+  font-size: 0.67rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* ---- Ações ---- */
+.kconfig-row-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Botões customizados da tabela (mais compactos e aprimorados) */
+.kc-btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.kc-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.kc-btn-ghost {
+  background: var(--bg-4);
+  color: var(--text-2);
+}
+
+.kc-btn-ghost:hover:not(:disabled) {
+  background: var(--bg-3);
+  color: var(--text);
+}
+
+.kc-btn-accent {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.kc-btn-accent:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: var(--accent);
+}
+
+.kc-btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.kc-btn-primary:hover:not(:disabled) {
+  background: var(--accent-h);
+}
+
+.kc-btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.kc-btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: var(--danger);
+}
+
+/* ---- Edição inline ---- */
+.kconfig-edit-color-wrap {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kconfig-edit-color {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  padding: 2px;
+  cursor: pointer;
+  background: var(--bg-4);
+  flex-shrink: 0;
+  transition: border-color var(--transition);
+}
+
+.kconfig-edit-color:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.kconfig-edit-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.kconfig-edit-label {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 800;
+  padding: 6px 10px;
+  outline: none;
+  width: 100%;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  letter-spacing: 0.2px;
+}
+
+.kconfig-edit-label:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+/* ---- Paleta de presets inline ---- */
+.kconfig-color-presets {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.kconfig-preset-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform var(--transition), border-color var(--transition);
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.kconfig-preset-dot:hover {
+  transform: scale(1.25);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.kconfig-preset-dot.active {
+  border-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+/* ---- Formulário de novo bucket ---- */
+.kconfig-new-form {
+  margin-top: 4px;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.kconfig-form-card {
+  background: var(--bg-2);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
+}
+
+.kconfig-form-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.kconfig-form-card-header h3 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.kconfig-form-close {
+  background: var(--bg-4);
+  border: none;
+  color: var(--text-3);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all var(--transition);
+}
+
+.kconfig-form-close:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.kconfig-form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+.kconfig-color-pick {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background: var(--bg-3);
+  transition: border-color var(--transition);
+}
+
+.kconfig-color-pick:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Paleta do formulário novo */
+.kconfig-new-palette {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.kconfig-palette-label {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.kconfig-palette-dots {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ---- Remap dialog ---- */
+.kconfig-remap-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  animation: fadeIn 0.2s ease;
+}
+
+.kconfig-remap-overlay.hidden {
+  display: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.kconfig-remap-modal {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px 36px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.kconfig-remap-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.kconfig-remap-modal h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+.kconfig-remap-modal p {
+  font-size: 0.88rem;
+  color: var(--text-2);
+  margin: 0 0 20px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ---- Responsividade ---- */
+@media (max-width: 768px) {
+  .kconfig-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kconfig-row {
+    grid-template-columns: 26px 24px 1fr auto;
+    gap: 8px;
+  }
+
+  .kconfig-row .kconfig-row-index,
+  .kconfig-row .kconfig-row-swatch {
+    display: none;
+  }
+
+  .kconfig-row-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .kconfig-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kconfig-row {
+    grid-template-columns: 26px 1fr auto;
+  }
+}

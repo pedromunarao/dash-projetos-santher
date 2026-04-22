@@ -1,0 +1,65 @@
+/* =============================================================
+   LAYOUT / TOPBAR
+   Barra superior fixa e container de conteúdo de páginas.
+   ============================================================= */
+
+/* ---- Conteúdo principal ---- */
+.main-content {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transition: margin-left var(--transition);
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+.sidebar.collapsed ~ .main-content { margin-left: var(--sidebar-collapsed); }
+
+/* ---- Topbar ---- */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--glass-bar);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 1.3rem;
+  padding: 4px;
+}
+
+.page-title   { font-size: 1.2rem; font-weight: 700; color: var(--text); }
+.current-date { font-size: 0.85rem; color: var(--text-3); }
+
+/* ---- Área de páginas ---- */
+.page-content { padding: 24px 28px; }
+.page         { display: block; }
+.page.hidden  { display: none !important; }
+
+/* ---- Responsivo ---- */
+@media (max-width: 700px) {
+  .main-content  { margin-left: 0 !important; }
+  .mobile-toggle { display: block; }
+  .page-content  { padding: 16px; }
+}

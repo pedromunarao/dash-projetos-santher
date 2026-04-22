@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Priority Manager – Gerenciamento de prioridades e projetos de TI da Santher" />
+  <title>Priority Manager – Santher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <!-- LOADER OVERLAY – exibido enquanto dados são carregados do banco -->
+  <div id="appLoader" class="app-loader">
+    <div class="app-loader-box">
+      <div class="app-loader-spinner"></div>
+      <div class="app-loader-text">Carregando dados...</div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Cabeçalho: logo + botão de colapso -->
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <span class="logo-text">Priority<strong>Manager</strong></span>
+        <img src="assets/santher_logo.png" alt="Santher" class="logo-img" />
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Recolher sidebar">
+        <span class="toggle-icon">‹</span>
+      </button>
+    </div>
+
+    <!-- CTA: Nova Tarefa (destaque) -->
+    <div class="sidebar-cta-wrap">
+      <a href="#" class="nav-item nav-cta" data-page="new-task" id="nav-new-task" title="Nova Tarefa">
+        <span class="nav-icon">➕</span>
+        <span class="nav-label">Nova Tarefa</span>
+      </a>
+    </div>
+
+    <!-- Navegação agrupada -->
+    <nav class="sidebar-nav">
+
+      <!-- Grupo: Visão Geral -->
+      <div class="nav-group">
+        <span class="nav-group-label">Visão Geral</span>
+        <a href="#" class="nav-item active" data-page="tv" id="nav-tv" title="Dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+      </div>
+
+      <!-- Grupo: Kanban -->
+      <div class="nav-group">
+        <span class="nav-group-label">Kanban</span>
+        <a href="#" class="nav-item" data-page="kanban" id="nav-kanban" title="Board Kanban">
+          <span class="nav-icon">🗂️</span>
+          <span class="nav-label">Board</span>
+        </a>
+      </div>
+
+      <!-- Grupo: Gestão -->
+      <div class="nav-group">
+        <span class="nav-group-label">Gestão</span>
+        <a href="#" class="nav-item" data-page="cadastros" id="nav-cadastros" title="Cadastros">
+          <span class="nav-icon">📒</span>
+          <span class="nav-label">Cadastros</span>
+        </a>
+        <a href="#" class="nav-item" data-page="reports" id="nav-reports" title="Relatórios">
+          <span class="nav-icon">📈</span>
+          <span class="nav-label">Relatórios</span>
+        </a>
+      </div>
+
+    </nav>
+
+    <!-- Rodapé: tema + versão -->
+    <div class="sidebar-footer">
+      <button class="theme-toggle" id="themeToggle" title="Alternar tema">
+        <span class="theme-icon">🌙</span>
+        <span class="nav-label">Tema Escuro</span>
+      </button>
+      <div class="sidebar-version">v1.0.0</div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content" id="mainContent">
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-toggle" id="mobileToggle">☰</button>
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <span class="current-date" id="currentDate"></span>
+      </div>
+    </header>
+
+    <!-- PAGE CONTENT -->
+    <div class="page-content">
+
+      <!-- ===== DASHBOARD PAGE ===== -->
+      <div class="page" id="page-dashboard">
+        <!-- METRICS -->
+        <section class="metrics-grid" id="metricsGrid"></section>
+
+        <!-- CHARTS / GRÁFICOS (Adicionado na versão Premium) -->
+        <section class="charts-grid">
+          <div class="chart-card">
+            <h4>Tarefas por Status</h4>
+            <div class="chart-canvas-container">
+              <canvas id="chartStatus"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h4>Demandas por Área</h4>
+            <div class="chart-canvas-container">
+              <canvas id="chartArea"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- FILTERS -->
+        <section class="filters-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Buscar por título ou ID..." class="search-input" />
+          </div>
+          <div class="filter-group">
+            <select id="filterStatus" class="filter-select">
+              <option value="">Todos os Status</option>
+            </select>
+            <select id="filterArea" class="filter-select">
+              <option value="">Todas as Áreas</option>
+            </select>
+            <select id="filterResource" class="filter-select">
+              <option value="">Todos os Recursos</option>
+            </select>
+            <select id="filterSolicitor" class="filter-select">
+              <option value="">Todos os Solicitantes</option>
+            </select>
+          </div>
+          <button class="btn btn-ghost" id="clearFilters">✕ Limpar</button>
+        </section>
+
+        <!-- TASK LIST -->
+        <section class="task-list" id="taskList">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">📋</div>
+            <h3>Nenhuma tarefa encontrada</h3>
+            <p>Crie sua primeira tarefa clicando em "Nova Tarefa"</p>
+            <button class="btn btn-primary" data-page="new-task">+ Nova Tarefa</button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== KANBAN PAGE ===== -->
+      <div class="page hidden" id="page-kanban">
+        <div class="kanban-board" id="kanbanBoard"></div>
+      </div>
+
+      <!-- ===== KANBAN CONFIG PAGE ===== -->
+      <div class="page hidden" id="page-kanban-config">
+
+        <!-- Header -->
+        <div class="kconfig-header">
+          <div>
+            <h2>⚙️ Gerenciamento de Buckets do Kanban</h2>
+            <p class="kconfig-desc">Cadastre, edite, reordene e exclua as colunas do board. Arraste para reordenar.</p>
+          </div>
+          <div class="kconfig-header-actions">
+            <button class="btn btn-ghost" id="kcRestoreBtn">↩ Restaurar Padrões</button>
+            <button class="btn btn-primary" id="kcAddBtn">+ Novo Bucket</button>
+          </div>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="kconfig-stats-bar" id="kcStatsBar"></div>
+
+        <!-- Info banner -->
+        <div class="kconfig-info">
+          ℹ️ Arraste os buckets para reordenar. As alterações são refletidas imediatamente no Kanban, Dashboard e Painéis de TV.
+        </div>
+
+        <!-- Preview dos buckets em ordem -->
+        <div class="kconfig-preview-bar" id="kcPreviewBar"></div>
+
+        <!-- Lista de buckets -->
+        <div class="kconfig-list" id="kcBucketList"></div>
+
+        <!-- Formulário de novo bucket -->
+        <div class="kconfig-new-form hidden" id="kcNewForm">
+          <div class="kconfig-form-card">
+            <div class="kconfig-form-card-header">
+              <h3>➕ Novo Bucket</h3>
+              <button class="kconfig-form-close" id="kcNewCancelBtn" title="Fechar">✕</button>
+            </div>
+            <div class="kconfig-form-row">
+              <div class="form-group" style="flex:1">
+                <label for="kcNewLabel">Nome do Bucket <span class="required">*</span></label>
+                <input type="text" id="kcNewLabel" placeholder="Ex: EM REVISÃO" maxlength="30" />
+              </div>
+              <div class="form-group" style="width:110px">
+                <label for="kcNewColor">Cor</label>
+                <input type="color" class="kconfig-color-pick" id="kcNewColor" value="#6366f1" />
+              </div>
+            </div>
+            <!-- Paleta de cores rápidas -->
+            <div class="kconfig-new-palette">
+              <span class="kconfig-palette-label">Paleta rápida:</span>
+              <div class="kconfig-palette-dots">
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#6b7280" style="background:#6b7280" title="Cinza"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#7c3aed" style="background:#7c3aed" title="Violeta"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#2563eb" style="background:#2563eb" title="Azul"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#0891b2" style="background:#0891b2" title="Ciano"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#059669" style="background:#059669" title="Esmeralda"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#16a34a" style="background:#16a34a" title="Verde"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#ca8a04" style="background:#ca8a04" title="Amarelo"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#d97706" style="background:#d97706" title="Âmbar"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#db2777" style="background:#db2777" title="Rosa"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#7e22ce" style="background:#7e22ce" title="Roxo"></button>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-ghost" id="kcNewCancelBtnFooter">Cancelar</button>
+              <button class="btn btn-primary" id="kcNewSaveBtn">✓ Criar Bucket</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remap dialog (excluir bucket com tarefas vinculadas) -->
+        <div class="kconfig-remap-overlay hidden" id="kcRemapOverlay">
+          <div class="kconfig-remap-modal">
+            <div class="kconfig-remap-icon">⚠️</div>
+            <h3>Remapear Tarefas</h3>
+            <p id="kcRemapMessage"></p>
+            <div class="form-group">
+              <label for="kcRemapTarget">Mover tarefas para:</label>
+              <select id="kcRemapTarget" class="filter-select" style="width:100%"></select>
+            </div>
+            <div class="form-actions" style="margin-top:20px">
+              <button class="btn btn-ghost" id="kcRemapCancelBtn">Cancelar</button>
+              <button class="btn btn-danger" id="kcRemapConfirmBtn">🗑️ Remapear e Excluir</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== NEW TASK PAGE ===== -->
+      <div class="page hidden" id="page-new-task">
+        <div class="form-container">
+          <div class="form-header">
+            <h2 id="formTitle">Nova Tarefa</h2>
+            <span class="form-id" id="formTaskId"></span>
+          </div>
+          <form id="taskForm" class="task-form" novalidate>
+            <input type="hidden" id="editTaskId" />
+
+            <div class="form-grid">
+              <!-- Título -->
+              <div class="form-group span-2">
+                <label for="taskTitle">Título <span class="required">*</span></label>
+                <input type="text" id="taskTitle" placeholder="Nome curto da tarefa" required />
+              </div>
+
+              <!-- Prioridade -->
+              <div class="form-group">
+                <label for="taskPriority">Prioridade <span class="required">*</span></label>
+                <input type="number" id="taskPriority" min="0" placeholder="0 = mais importante" required />
+              </div>
+
+              <!-- Status -->
+              <div class="form-group">
+                <label for="taskStatus">Status <span class="required">*</span></label>
+                <select id="taskStatus" required></select>
+              </div>
+
+              <!-- Área Solicitante -->
+              <div class="form-group">
+                <label for="taskArea">Área Solicitante <span class="required">*</span></label>
+                <select id="taskArea" required></select>
+              </div>
+
+              <!-- Solicitante -->
+              <div class="form-group">
+                <label for="taskSolicitor">Solicitante <span class="required">*</span></label>
+                <input type="text" id="taskSolicitor" placeholder="Nome do solicitante" required />
+              </div>
+
+              <!-- Data Prevista -->
+              <div class="form-group">
+                <label for="taskDueDate">Data Prevista de Entrega</label>
+                <input type="date" id="taskDueDate" />
+              </div>
+
+              <!-- Recursos Alocados -->
+              <div class="form-group span-2">
+                <label>Recursos Alocados</label>
+                <div class="resources-picker" id="resourcesPicker"></div>
+              </div>
+
+              <!-- Descrição -->
+              <div class="form-group span-2">
+                <label for="taskDescription">Descrição</label>
+                <textarea id="taskDescription" rows="4" placeholder="Detalhamento completo da tarefa..."></textarea>
+              </div>
+
+              <!-- Observações -->
+              <div class="form-group span-2">
+                <label for="taskNotes">Observações</label>
+                <textarea id="taskNotes" rows="3" placeholder="Anotações e atualizações..."></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-ghost" id="cancelForm">Cancelar</button>
+              <button type="submit" class="btn btn-primary" id="submitForm">Salvar Tarefa</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ===== RESOURCES PAGE ===== -->
+      <div class="page hidden" id="page-resources">
+        <div class="resources-header">
+          <button class="btn btn-primary" id="newResourceBtn">+ Novo Recurso</button>
+        </div>
+
+        <!-- New Resource Form -->
+        <div class="resource-form-card hidden" id="resourceFormCard">
+          <h3 id="resourceFormTitle">Novo Recurso</h3>
+          <form id="resourceForm" class="resource-form" novalidate>
+            <input type="hidden" id="editResourceId" />
+            <div class="form-grid cols-3">
+              <div class="form-group">
+                <label for="resourceName">Nome <span class="required">*</span></label>
+                <input type="text" id="resourceName" placeholder="Nome do recurso" required />
+              </div>
+              <div class="form-group">
+                <label for="resourceType">Tipo <span class="required">*</span></label>
+                <div class="type-input-group">
+                  <select id="resourceType" required></select>
+                  <button type="button" class="btn btn-ghost btn-sm" id="addTypeBtn">+ Tipo</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="resourceStatus">Status <span class="required">*</span></label>
+                <select id="resourceStatus" required></select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-ghost" id="cancelResource">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Salvar Recurso</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="resources-grid" id="resourcesGrid"></div>
+      </div>
+
+      <!-- ===== REPORTS PAGE ===== -->
+      <div class="page hidden" id="page-reports">
+        <div class="reports-toolbar">
+          <button class="btn btn-primary" id="exportCsvBtn">⬇ Exportar CSV</button>
+        </div>
+        <div class="reports-content" id="reportsContent"></div>
+      </div>
+
+      <!-- ===== CADASTROS PAGE ===== -->
+      <div class="page hidden" id="page-cadastros">
+
+        <!-- Header -->
+        <div class="cad-header">
+          <div>
+            <h2>📒 Cadastros do Sistema</h2>
+            <p class="cad-header-desc">Gerencie áreas solicitantes, tipos de recurso, recursos e buckets do Kanban em um único lugar.</p>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="cad-tabs">
+          <button class="cad-tab active" data-section="areas" id="cad-tab-areas">
+            🏢 Áreas Solicitantes
+          </button>
+          <button class="cad-tab" data-section="types" id="cad-tab-types">
+            🏷️ Tipos de Recurso
+          </button>
+          <button class="cad-tab" data-section="recursos" id="cad-tab-recursos">
+            👥 Recursos
+          </button>
+          <button class="cad-tab" data-section="kanban" id="cad-tab-kanban">
+            🗂️ Buckets do Kanban
+          </button>
+        </div>
+
+        <!-- =========================
+             SEÇÃO 1: ÁREAS
+        ========================= -->
+        <div class="cad-section" data-section="areas" id="cad-section-areas">
+          <div class="cad-section-card">
+            <div class="cad-section-card-header">
+              <h3>🏢 Áreas Solicitantes</h3>
+              <span class="cad-section-desc">Controla as áreas disponíveis no formulário de cadastro de projetos.</span>
+            </div>
+
+            <!-- Lista de chips -->
+            <div class="cad-chips-area" id="cad-areas-list"></div>
+
+            <!-- Adicionar nova área -->
+            <div class="cad-add-row">
+              <input type="text" id="cad-new-area" class="cad-add-input"
+                placeholder="Nova área (ex: FISCAL)" maxlength="40" />
+              <button class="btn btn-primary" id="cad-add-area-btn">✓ Adicionar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================
+             SEÇÃO 2: TIPOS DE RECURSO
+        ========================= -->
+        <div class="cad-section hidden" data-section="types" id="cad-section-types">
+          <div class="cad-section-card">
+            <div class="cad-section-card-header">
+              <h3>🏷️ Tipos de Recurso</h3>
+              <span class="cad-section-desc">Categorias de profissionais utilizadas no cadastro de recursos.</span>
+            </div>
+
+            <div class="cad-chips-area" id="cad-types-list"></div>
+
+            <div class="cad-add-row">
+              <input type="text" id="cad-new-type" class="cad-add-input"
+                placeholder="Novo tipo (ex: ANALISTA DE DADOS)" maxlength="40" />
+              <button class="btn btn-primary" id="cad-add-type-btn">✓ Adicionar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================
+             SEÇÃO 3: RECURSOS
+        ========================= -->
+        <div class="cad-section hidden" data-section="recursos" id="cad-section-recursos">
+
+          <!-- Formulário alinhado ao topo -->
+          <div class="cad-rec-form-card hidden" id="cad-rec-form-card">
+            <div class="cad-section-card-header">
+              <h3 id="cad-rec-form-title">Novo Recurso</h3>
+              <button class="btn btn-ghost btn-sm" id="cad-rec-cancel">✕ Fechar</button>
+            </div>
+            <form id="cad-rec-form" novalidate>
+              <input type="hidden" id="cad-rec-edit-id" />
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label for="cad-rec-name">Nome <span class="required">*</span></label>
+                  <input type="text" id="cad-rec-name" placeholder="Nome do recurso" required />
+                </div>
+                <div class="form-group">
+                  <label for="cad-rec-type">Tipo <span class="required">*</span></label>
+                  <select id="cad-rec-type" required></select>
+                </div>
+                <div class="form-group">
+                  <label for="cad-rec-status">Status <span class="required">*</span></label>
+                  <select id="cad-rec-status" required></select>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-ghost" id="cad-rec-cancel-foot">Cancelar</button>
+                <button type="submit" class="btn btn-primary">✓ Salvar Recurso</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="cad-recursos-header">
+            <button class="btn btn-primary" id="cad-new-rec-btn">+ Novo Recurso</button>
+          </div>
+          <div class="cad-recursos-grid" id="cad-recursos-grid"></div>
+        </div>
+
+        <!-- =========================
+             SEÇÃO 4: BUCKETS KANBAN
+        ========================= -->
+        <div class="cad-section hidden" data-section="kanban" id="cad-section-kanban">
+          <div class="cad-section-card">
+            <div class="cad-section-card-header">
+              <h3>🗂️ Buckets do Kanban</h3>
+              <span class="cad-section-desc">Arraste para reordenar. Clique na cor para alterar. Exclusão só é possível se não houver tarefas vinculadas.</span>
+            </div>
+
+            <!-- Lista de buckets -->
+            <div class="cad-kanban-list" id="cad-kanban-list"></div>
+
+            <!-- Adicionar novo bucket -->
+            <div class="cad-add-row cad-bucket-add-row">
+              <input type="text" id="cad-new-bucket-label" class="cad-add-input"
+                placeholder="Nome do bucket (ex: EM REVISÃO)" maxlength="30" />
+              <input type="color" id="cad-new-bucket-color" value="#6366f1" class="cad-bucket-color-pick" title="Cor" />
+              <button class="btn btn-primary" id="cad-add-bucket-btn">✓ Adicionar</button>
+            </div>
+
+            <!-- Paleta rápida -->
+            <div class="cad-palette-row">
+              <span class="cad-palette-label">Paleta rápida:</span>
+              <div class="cad-palette-dots">
+                <button class="cad-bucket-preset-dot" data-color="#6b7280" style="background:#6b7280" title="Cinza"></button>
+                <button class="cad-bucket-preset-dot" data-color="#7c3aed" style="background:#7c3aed" title="Violeta"></button>
+                <button class="cad-bucket-preset-dot" data-color="#2563eb" style="background:#2563eb" title="Azul"></button>
+                <button class="cad-bucket-preset-dot" data-color="#0891b2" style="background:#0891b2" title="Ciano"></button>
+                <button class="cad-bucket-preset-dot" data-color="#059669" style="background:#059669" title="Esmeralda"></button>
+                <button class="cad-bucket-preset-dot" data-color="#16a34a" style="background:#16a34a" title="Verde"></button>
+                <button class="cad-bucket-preset-dot" data-color="#ca8a04" style="background:#ca8a04" title="Amarelo"></button>
+                <button class="cad-bucket-preset-dot" data-color="#d97706" style="background:#d97706" title="Âmbar"></button>
+                <button class="cad-bucket-preset-dot" data-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
+                <button class="cad-bucket-preset-dot" data-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
+                <button class="cad-bucket-preset-dot" data-color="#db2777" style="background:#db2777" title="Rosa"></button>
+                <button class="cad-bucket-preset-dot" data-color="#7e22ce" style="background:#7e22ce" title="Roxo"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /page-cadastros -->
+
+      <!-- ===== TV PAGE ===== -->
+      <div class="page hidden tv-page" id="page-tv">
+
+        <!-- Toolbar: seletor de painéis + relógio + controles -->
+        <div class="tv-toolbar">
+          <div class="tv-tabs">
+            <button class="tv-tab active" data-panel="overview" id="tv-tab-overview">
+              📊 Visão Geral
+            </button>
+            <button class="tv-tab" data-panel="pipeline" id="tv-tab-pipeline">
+              🔄 Pipeline
+            </button>
+            <button class="tv-tab" data-panel="team" id="tv-tab-team">
+              👥 Equipe
+            </button>
+          </div>
+          <div class="tv-controls">
+            <span class="tv-refresh-badge" id="tvRefreshBadge">Atualiza em 30s</span>
+            <span class="tv-clock" id="tvClock">--:--:--</span>
+            <button class="btn btn-ghost btn-sm" id="tvFullscreenBtn" title="Tela Cheia">⛶ Tela Cheia</button>
+          </div>
+        </div>
+
+        <!-- Conteúdo do painel selecionado -->
+        <div class="tv-content" id="tvContent"></div>
+
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+
+  <!-- TASK DETAIL MODAL -->
+  <div class="modal-overlay hidden" id="taskModal">
+    <div class="modal" id="taskModalContent">
+      <div class="modal-header">
+        <div>
+          <span class="modal-task-id" id="modalTaskId"></span>
+          <h2 class="modal-title" id="modalTitle"></h2>
+        </div>
+        <div class="modal-header-actions">
+          <button class="btn btn-ghost btn-sm" id="modalEditBtn">✏️ Editar</button>
+          <button class="btn btn-danger btn-sm" id="modalDeleteBtn">🗑️ Excluir</button>
+          <button class="modal-close" id="modalClose">✕</button>
+        </div>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <!-- CONFIRM DIALOG -->
+  <div class="modal-overlay hidden" id="confirmDialog">
+    <div class="modal confirm-modal">
+      <h3 id="confirmTitle">Confirmar ação</h3>
+      <p id="confirmMessage"></p>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="confirmCancel">Cancelar</button>
+        <button class="btn btn-danger" id="confirmOk">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- CHART.JS BIBLIOTECA -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="js/core/constants.js"></script>
+  <script src="js/core/store.js"></script>
+  <script src="js/utils/helpers.js"></script>
+  <script src="js/modules/dashboard.js"></script>
+  <script src="js/modules/kanban.js"></script>
+  <script src="js/modules/task-form.js"></script>
+  <script src="js/modules/resources.js"></script>
+  <script src="js/modules/reports.js"></script>
+  <script src="js/modules/tv-dashboards.js"></script>
+  <script src="js/modules/kanban-config.js"></script>
+  <script src="js/modules/cadastros.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

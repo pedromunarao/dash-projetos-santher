@@ -1,0 +1,410 @@
+/* =============================================================
+   PAGES / TV
+   Três painéis otimizados para exibição em TV/tela cheia.
+   Fonte maior, layout espaçoso e legível à distância.
+   ============================================================= */
+
+/* ---- Wrapper da página TV ---- */
+.tv-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--topbar-h));
+}
+
+/* ---- Toolbar: seletor de painéis + controles ---- */
+.tv-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.tv-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.tv-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.tv-tab:hover  { background: var(--bg-4); color: var(--text); transform: translateY(-1px); }
+.tv-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 12px rgba(99,102,241,0.35); }
+
+.tv-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tv-clock {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 90px;
+  text-align: right;
+}
+
+.tv-refresh-badge {
+  font-size: 0.78rem;
+  color: var(--text-3);
+  padding: 4px 10px;
+  background: var(--bg-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+/* ---- Área de conteúdo scrollável ---- */
+.tv-content {
+  flex: 1;
+  padding: 20px 24px;
+  overflow: auto;
+}
+
+@keyframes tv-fade-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tv-content > * { animation: tv-fade-in 0.35s ease forwards; }
+
+
+/* =============================================================
+   PAINEL 1 — VISÃO GERAL
+   ============================================================= */
+
+.tv-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tv-metric-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.tv-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--m-color, var(--accent));
+}
+
+.tv-metric-card::after {
+  content: '';
+  position: absolute;
+  bottom: -24px; right: -24px;
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: var(--m-color, var(--accent));
+  opacity: 0.07;
+}
+
+.tv-metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+.tv-metric-icon  { font-size: 1.8rem; }
+.tv-metric-label { font-size: 0.75rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
+.tv-metric-value { font-size: 3.2rem; font-weight: 900; color: var(--text); line-height: 1; }
+.tv-metric-sub   { font-size: 0.82rem; color: var(--text-2); }
+
+/* Charts row */
+.tv-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tv-chart-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.tv-chart-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 16px 0;
+}
+
+.tv-chart-canvas {
+  position: relative;
+  height: 260px;
+}
+
+/* Barras horizontais de área */
+.tv-area-bars { display: flex; flex-direction: column; gap: 14px; }
+
+.tv-area-bar-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 36px;
+  align-items: center;
+  gap: 12px;
+}
+
+.tv-area-bar-label { font-size: 0.82rem; font-weight: 600; color: var(--text-2); text-align: right; }
+.tv-area-bar-track { background: var(--bg-4); border-radius: 999px; height: 14px; overflow: hidden; }
+.tv-area-bar-fill  { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #818cf8); transition: width 0.9s cubic-bezier(0.25,0.8,0.25,1); }
+.tv-area-bar-count { font-size: 0.85rem; font-weight: 800; color: var(--text); }
+
+/* Tarefas críticas */
+.tv-critical-section {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.tv-critical-section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tv-critical-list { display: flex; flex-direction: column; gap: 8px; }
+
+.tv-critical-item {
+  display: grid;
+  grid-template-columns: 48px 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-3);
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--status-color, #888);
+  transition: background var(--transition);
+}
+
+.tv-critical-item:hover { background: var(--bg-4); }
+
+.tv-critical-prio  { font-size: 1.3rem; font-weight: 900; color: var(--text); text-align: center; }
+.tv-critical-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+.tv-critical-area  { font-size: 0.78rem; color: var(--text-3); margin-top: 2px; }
+
+
+/* =============================================================
+   PAINEL 2 — PIPELINE
+   ============================================================= */
+
+.tv-pipeline {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  height: calc(100vh - var(--topbar-h) - 120px);
+}
+
+/* Scroll invisível mas funcional */
+.tv-pipeline::-webkit-scrollbar { height: 6px; }
+.tv-pipeline::-webkit-scrollbar-track { background: transparent; }
+.tv-pipeline::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.tv-pipeline-col {
+  flex: 0 0 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tv-pipeline-header {
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  flex-shrink: 0;
+}
+
+.tv-pipeline-status {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tv-pipeline-count {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+
+.tv-pipeline-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.tv-pipeline-items::-webkit-scrollbar { width: 4px; }
+.tv-pipeline-items::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.tv-pipeline-item {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-left: 3px solid var(--col-color, #888);
+  transition: background var(--transition);
+}
+
+.tv-pipeline-item:hover { background: var(--bg-3); }
+
+.tv-pipeline-item-id     { font-size: 0.67rem; font-weight: 700; color: var(--accent); font-family: monospace; }
+.tv-pipeline-item-title  { font-size: 0.82rem; font-weight: 600; color: var(--text); line-height: 1.3; }
+.tv-pipeline-item-meta   { font-size: 0.72rem; color: var(--text-3); }
+.tv-pipeline-item-overdue{ font-size: 0.68rem; color: var(--danger); font-weight: 800; }
+
+
+/* =============================================================
+   PAINEL 3 — EQUIPE
+   ============================================================= */
+
+.tv-team-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.tv-team-stat {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.tv-team-stat-icon  { font-size: 2rem; }
+.tv-team-stat-info  { display: flex; flex-direction: column; gap: 2px; }
+.tv-team-stat-value { font-size: 2.4rem; font-weight: 900; color: var(--text); line-height: 1; }
+.tv-team-stat-label { font-size: 0.75rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.tv-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.tv-resource-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.tv-resource-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+.tv-resource-header {
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tv-resource-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.tv-resource-name        { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.tv-resource-type        { font-size: 0.72rem; color: var(--text-3); font-weight: 500; margin-top: 1px; }
+
+.tv-resource-status-badge {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.tv-resource-tasks {
+  padding: 12px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tv-resource-task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+
+.tv-resource-task-item:last-child { border-bottom: none; }
+.tv-resource-task-dot             { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tv-resource-task-title           { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tv-resource-no-tasks             { font-size: 0.78rem; color: var(--text-3); font-style: italic; padding: 4px 0; }
+
+/* ---- Fullscreen ---- */
+:fullscreen        .sidebar, :-webkit-full-screen .sidebar { display: none !important; }
+:fullscreen        .main-content, :-webkit-full-screen .main-content { margin-left: 0 !important; }
+:fullscreen        .topbar, :-webkit-full-screen .topbar { display: none !important; }
+:fullscreen        .tv-page, :-webkit-full-screen .tv-page { min-height: 100vh; }
+:fullscreen        .tv-pipeline, :-webkit-full-screen .tv-pipeline { height: calc(100vh - 70px); }
+
+/* ---- Responsivo TV ---- */
+@media (max-width: 1200px) {
+  .tv-overview-grid  { grid-template-columns: repeat(2, 1fr); }
+  .tv-team-summary   { grid-template-columns: repeat(2, 1fr); }
+  .tv-charts-row     { grid-template-columns: 1fr; }
+}

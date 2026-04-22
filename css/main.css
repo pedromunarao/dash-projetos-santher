@@ -1,0 +1,33 @@
+/* =============================================================
+   MAIN CSS – Ponto de entrada
+   Importa todos os módulos CSS na ordem correta:
+     1. Base      → tokens e reset
+     2. Layout    → sidebar e topbar
+     3. Components → UI reutilizável
+     4. Pages     → estilos específicos por página
+   ============================================================= */
+
+/* 1. Base */
+@import url('./base/variables.css');
+@import url('./base/reset.css');
+
+/* 2. Layout */
+@import url('./layout/sidebar.css');
+@import url('./layout/topbar.css');
+
+/* 3. Components */
+@import url('./components/buttons.css');
+@import url('./components/forms.css');
+@import url('./components/badges.css');
+@import url('./components/modal.css');
+@import url('./components/toast.css');
+
+/* 4. Pages */
+@import url('./pages/dashboard.css');
+@import url('./pages/kanban.css');
+@import url('./pages/resources.css');
+@import url('./pages/reports.css');
+@import url('./pages/tv.css');
+@import url('./pages/kanban-config.css');
+@import url('./pages/cadastros.css');
+@import url('./components/app-loader.css');

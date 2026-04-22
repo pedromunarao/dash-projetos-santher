@@ -1,0 +1,80 @@
+/* =============================================================
+   BASE / VARIABLES
+   Design tokens — dimensões, sombras, transições, tipografia
+   e paletas de cores (tema escuro e claro).
+   ============================================================= */
+
+/* ---- Tokens globais ---- */
+:root {
+  --sidebar-w:         250px;
+  --sidebar-collapsed: 72px;
+  --topbar-h:          64px;
+
+  --radius:    14px;
+  --radius-sm:  8px;
+  --radius-lg: 20px;
+
+  --shadow:    0 8px 32px rgba(0, 0, 0, 0.15);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  --transition: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  --font:       'Inter', system-ui, sans-serif;
+
+  /* Cores de status aprimoradas */
+  --s-pending:       #94a3b8;
+  --s-survey:        #8b5cf6;
+  --s-dev:           #3b82f6;
+  --s-hml-up:        #eab308;
+  --s-hml-dev:       #f97316;
+  --s-hml-santher:   #f97316;
+  --s-ok-hml:        #14b8a6;
+  --s-prod-up:       #d97706;
+  --s-prod:          #10b981;
+  --s-done:          #059669;
+}
+
+/* ---- Tema escuro (Premium) ---- */
+[data-theme="dark"] {
+  --bg:         #0b0f19;
+  --bg-2:       #151b29;
+  --bg-3:       #1e2536;
+  --bg-4:       #2b3548;
+  --border:     rgba(255, 255, 255, 0.06);
+
+  /* Glassmorphism tokens */
+  --glass-bg:   rgba(21, 27, 41, 0.75);
+  --glass-bar:  rgba(11, 15, 25, 0.85);
+
+  --text:       #f1f5f9;
+  --text-2:     #cbd5e1;
+  --text-3:     #94a3b8;
+
+  --accent:     #6366f1;
+  --accent-h:   #4f46e5;
+  --danger:     #ef4444;
+  --success:    #10b981;
+  --warning:    #f59e0b;
+}
+
+/* ---- Tema claro (Premium) ---- */
+[data-theme="light"] {
+  --bg:         #f8fafc;
+  --bg-2:       #ffffff;
+  --bg-3:       #f1f5f9;
+  --bg-4:       #e2e8f0;
+  --border:     rgba(0, 0, 0, 0.05);
+
+  /* Glassmorphism tokens */
+  --glass-bg:   rgba(255, 255, 255, 0.85);
+  --glass-bar:  rgba(248, 250, 252, 0.9);
+
+  --text:       #0f172a;
+  --text-2:     #334155;
+  --text-3:     #64748b;
+
+  --accent:     #4f46e5;
+  --accent-h:   #4338ca;
+  --danger:     #dc2626;
+  --success:    #059669;
+  --warning:    #d97706;
+}
