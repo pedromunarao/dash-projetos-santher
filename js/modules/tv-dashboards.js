@@ -14,6 +14,9 @@ const TVDashboards = (() => {
   let refreshTimer = null;
   let clockTimer = null;
   let chartInstance = null;
+  let autoSwitchTimer = null;
+  let autoSwitchEnabled = false;
+  let autoSwitchIntervalMs = 30000;
 
   const PANELS = [
     { key: 'overview', label: 'Visão Geral', icon: '📊' },
@@ -73,25 +76,37 @@ const TVDashboards = (() => {
         </div>
       `).join('');
 
-    /* Tarefas críticas */
+    /* Tarefas Críticas (isCritical = true) */
     const critical = tasks
-      .filter(t => t.status !== 'CONCLUIDO' && (UI.isOverdue(t) || t.priority <= 2))
+      .filter(t => t.status !== 'CONCLUIDO' && t.isCritical)
       .sort((a, b) => a.priority - b.priority)
-      .slice(0, 6);
+      .slice(0, 5);
+
+    /* Tarefas Atrasadas (UI.isOverdue(t) = true) */
+    const overdueList = tasks
+      .filter(t => t.status !== 'CONCLUIDO' && UI.isOverdue(t))
+      .sort((a, b) => a.priority - b.priority)
+      .slice(0, 5);
+
+    const renderItem = t => `
+      <div class="tv-critical-item" style="--status-color:${getStatusColor(t.status)}">
+        <div class="tv-critical-prio">${t.priority}</div>
+        <div>
+          <div class="tv-critical-title">${escapeHtml(t.title)}</div>
+          <div class="tv-critical-area">${escapeHtml(t.area)} • ${escapeHtml(t.solicitor)}</div>
+        </div>
+        <div>${UI.statusBadge(t.status)}</div>
+        ${UI.isOverdue(t) ? '<span style="color:var(--danger);font-size:0.75rem;font-weight:800;white-space:nowrap">⚠ ATRASADA</span>' : '<span></span>'}
+      </div>
+    `;
 
     const criticalHtml = critical.length === 0
-      ? '<p style="color:var(--text-3);font-style:italic;padding:8px">Nenhuma tarefa crítica no momento 🎉</p>'
-      : critical.map(t => `
-          <div class="tv-critical-item" style="--status-color:${getStatusColor(t.status)}">
-            <div class="tv-critical-prio">${t.priority}</div>
-            <div>
-              <div class="tv-critical-title">${escapeHtml(t.title)}</div>
-              <div class="tv-critical-area">${escapeHtml(t.area)} • ${escapeHtml(t.solicitor)}</div>
-            </div>
-            <div>${UI.statusBadge(t.status)}</div>
-            ${UI.isOverdue(t) ? '<span style="color:var(--danger);font-size:0.75rem;font-weight:800;white-space:nowrap">⚠ ATRASADA</span>' : '<span></span>'}
-          </div>
-        `).join('');
+      ? '<p style="color:var(--text-3);font-style:italic;padding:8px;font-size:0.9rem">Nenhuma tarefa crítica no momento 🎉</p>'
+      : critical.map(renderItem).join('');
+
+    const overdueHtml = overdueList.length === 0
+      ? '<p style="color:var(--text-3);font-style:italic;padding:8px;font-size:0.9rem">Nenhuma tarefa atrasada no momento 🎉</p>'
+      : overdueList.map(renderItem).join('');
 
     return `
       <div class="tv-overview-grid">
@@ -120,9 +135,15 @@ const TVDashboards = (() => {
         </div>
       </div>
 
-      <div class="tv-critical-section">
-        <h3>⚡ Tarefas Críticas &amp; Atrasadas</h3>
-        <div class="tv-critical-list">${criticalHtml}</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
+        <div class="tv-critical-section" style="margin-top: 0;">
+          <h3>⚡ Tarefas Críticas</h3>
+          <div class="tv-critical-list">${criticalHtml}</div>
+        </div>
+        <div class="tv-critical-section" style="margin-top: 0;">
+          <h3 style="color: var(--danger)">⚠ Tarefas Atrasadas</h3>
+          <div class="tv-critical-list">${overdueHtml}</div>
+        </div>
       </div>
     `;
   }
@@ -373,6 +394,21 @@ const TVDashboards = (() => {
   }
 
   /* ==============================================================
+     AUTO-SWITCH (Navegação automática entre abas)
+  ============================================================== */
+
+  function startAutoSwitch() {
+    clearInterval(autoSwitchTimer);
+    if (!autoSwitchEnabled) return;
+    autoSwitchTimer = setInterval(() => {
+      const currentIndex = PANELS.findIndex(p => p.key === currentPanel);
+      const nextIndex = (currentIndex + 1) % PANELS.length;
+      currentPanel = PANELS[nextIndex].key;
+      renderContent();
+    }, autoSwitchIntervalMs);
+  }
+
+  /* ==============================================================
      RENDER (chamado ao navegar para a página)
   ============================================================== */
 
@@ -380,6 +416,7 @@ const TVDashboards = (() => {
     renderContent();
     startClock();
     startRefresh();
+    startAutoSwitch();
   }
 
   /* ==============================================================
@@ -391,11 +428,25 @@ const TVDashboards = (() => {
       btn.addEventListener('click', () => {
         currentPanel = btn.dataset.panel;
         renderContent();
+        if (autoSwitchEnabled) startAutoSwitch();
       });
     });
 
     document.getElementById('tvFullscreenBtn')
       ?.addEventListener('click', toggleFullscreen);
+
+    const toggleEl = document.getElementById('tvAutoSwitchToggle');
+    const selectEl = document.getElementById('tvAutoSwitchInterval');
+    if (toggleEl && selectEl) {
+      toggleEl.addEventListener('change', (e) => {
+        autoSwitchEnabled = e.target.checked;
+        startAutoSwitch();
+      });
+      selectEl.addEventListener('change', (e) => {
+        autoSwitchIntervalMs = Number(e.target.value);
+        if (autoSwitchEnabled) startAutoSwitch();
+      });
+    }
   }
 
   return { init, render };

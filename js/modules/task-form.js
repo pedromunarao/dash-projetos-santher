@@ -67,6 +67,10 @@ const TaskForm = (() => {
     document.getElementById('taskForm').reset();
     document.getElementById('editTaskId').value        = '';
     document.getElementById('taskPriority').value      = getNextPriority();
+    document.getElementById('taskIsCritical').checked  = false;
+    document.getElementById('taskProgress').value      = 0;
+    document.getElementById('taskProgressLabel').textContent = '0%';
+    document.getElementById('formChecklistList').innerHTML = '';
     populateSelects();
     buildResourcePicker([]);
     App.navigate('new-task');
@@ -86,6 +90,7 @@ const TaskForm = (() => {
 
     document.getElementById('taskTitle').value        = task.title;
     document.getElementById('taskPriority').value     = task.priority;
+    document.getElementById('taskIsCritical').checked = !!task.isCritical;
     document.getElementById('taskStatus').value       = task.status;
     document.getElementById('taskArea').value         = task.area;
     document.getElementById('taskSolicitor').value    = task.solicitor;
@@ -93,6 +98,11 @@ const TaskForm = (() => {
     document.getElementById('taskDescription').value  = task.description || '';
     document.getElementById('taskNotes').value        = task.notes || '';
 
+    const prog = task.progress || 0;
+    document.getElementById('taskProgress').value = prog;
+    document.getElementById('taskProgressLabel').textContent = prog + '%';
+
+    buildChecklistForm(task.checklist || []);
     buildResourcePicker(task.resources || []);
     App.navigate('new-task');
   }
@@ -121,6 +131,40 @@ const TaskForm = (() => {
     return ok;
   }
 
+  /* ---- Retorna checklist do formulário ---- */
+  function getFormChecklist() {
+    const items = document.querySelectorAll('#formChecklistList .checklist-item');
+    return [...items].map(item => ({
+      text: item.querySelector('.checklist-text').textContent,
+      done: item.querySelector('.checklist-cb').checked,
+    }));
+  }
+
+  /* ---- Constrói lista de checklist no formulário ---- */
+  function buildChecklistForm(items = []) {
+    const list = document.getElementById('formChecklistList');
+    if (!list) return;
+    list.innerHTML = items.map((item, idx) => `
+      <div class="checklist-item" data-idx="${idx}">
+        <label class="checklist-label ${item.done ? 'done' : ''}">
+          <input type="checkbox" class="checklist-cb" ${item.done ? 'checked' : ''} />
+          <span class="checklist-text">${escapeHtml(item.text)}</span>
+        </label>
+        <button type="button" class="checklist-remove" data-idx="${idx}" title="Remover">✕</button>
+      </div>`).join('');
+
+    list.querySelectorAll('.checklist-label').forEach(label => {
+      const cb = label.querySelector('.checklist-cb');
+      cb.addEventListener('change', () => label.classList.toggle('done', cb.checked));
+    });
+    list.querySelectorAll('.checklist-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newItems = getFormChecklist().filter((_, i) => i !== Number(btn.dataset.idx));
+        buildChecklistForm(newItems);
+      });
+    });
+  }
+
   /* ---- Submit ---- */
   async function onSubmit(e) {
     e.preventDefault();
@@ -140,6 +184,9 @@ const TaskForm = (() => {
       description: document.getElementById('taskDescription').value.trim(),
       notes:       document.getElementById('taskNotes').value.trim(),
       resources:   getSelectedResources(),
+      progress:    parseInt(document.getElementById('taskProgress').value) || 0,
+      isCritical:  document.getElementById('taskIsCritical').checked,
+      checklist:   getFormChecklist(),
     };
 
     try {
@@ -150,8 +197,6 @@ const TaskForm = (() => {
         await Store.addTask(data);
         UI.toast('Tarefa criada com sucesso!', 'success');
       }
-      Dashboard.render();
-      Kanban.render();
       App.navigate('tv');
     } catch (err) {
       UI.toast('Erro ao salvar tarefa: ' + err.message, 'error');
@@ -166,6 +211,30 @@ const TaskForm = (() => {
     populateSelects();
     document.getElementById('taskForm').addEventListener('submit', onSubmit);
     document.getElementById('cancelForm').addEventListener('click', () => App.navigate('tv'));
+
+    // Slider de progresso
+    const progSlider = document.getElementById('taskProgress');
+    const progLabel  = document.getElementById('taskProgressLabel');
+    if (progSlider) {
+      progSlider.addEventListener('input', () => {
+        progLabel.textContent = progSlider.value + '%';
+      });
+    }
+
+    // Adicionar item ao checklist
+    const addBtn   = document.getElementById('formChecklistAdd');
+    const addInput = document.getElementById('formChecklistInput');
+    if (addBtn && addInput) {
+      const addItem = () => {
+        const text = addInput.value.trim();
+        if (!text) return;
+        const current = getFormChecklist();
+        buildChecklistForm([...current, { text, done: false }]);
+        addInput.value = '';
+      };
+      addBtn.addEventListener('click', addItem);
+      addInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } });
+    }
 
     ['taskTitle', 'taskPriority', 'taskStatus', 'taskArea', 'taskSolicitor'].forEach(id => {
       const el = document.getElementById(id);

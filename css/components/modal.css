@@ -116,3 +116,170 @@
 .confirm-modal         { max-width: 400px; padding: 28px; }
 .confirm-modal h3      { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
 .confirm-modal p       { font-size: 0.9rem; color: var(--text-2); margin-bottom: 20px; }
+
+/* ================================================================
+   PROGRESSO DA TAREFA
+================================================================ */
+.task-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.task-progress-bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-3);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.task-progress-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #6366f1, #22c55e);
+  transition: width 0.2s ease;
+  min-width: 0;
+}
+
+.task-progress-pct {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 38px;
+  text-align: right;
+}
+
+.task-progress-slider {
+  width: 100%;
+  accent-color: #6366f1;
+  cursor: pointer;
+  height: 4px;
+}
+
+/* ================================================================
+   CHECKLIST
+================================================================ */
+.checklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--bg-3);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  transition: background var(--transition);
+}
+
+.checklist-item:hover { background: var(--bg-hover); }
+
+.checklist-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.checklist-label.done .checklist-text {
+  text-decoration: line-through;
+  color: var(--text-3);
+}
+
+.checklist-cb { accent-color: #22c55e; cursor: pointer; width: 15px; height: 15px; flex-shrink: 0; }
+
+.checklist-remove {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 0.75rem;
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.checklist-remove:hover { background: var(--danger-bg, rgba(239,68,68,0.15)); color: var(--danger); }
+
+.checklist-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.checklist-input {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.checklist-input:focus { border-color: var(--accent); }
+
+/* ================================================================
+   COMENTÁRIOS
+================================================================ */
+.comments-add-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.comment-input {
+  flex: 1;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition);
+}
+
+.comment-input:focus { border-color: var(--accent); }
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.comment-entry {
+  background: var(--bg-3);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 8px 12px;
+}
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.comment-icon { font-size: 0.75rem; }
+.comment-time { font-size: 0.72rem; color: var(--text-3); font-weight: 600; }
+.comment-text { font-size: 0.85rem; color: var(--text-2); line-height: 1.5; word-break: break-word; }

@@ -6,9 +6,9 @@
  * A cada escrita o arquivo é salvo atomicamente.
  */
 
-const path    = require('path');
-const fs      = require('fs');
-const bcrypt  = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
+const bcrypt = require('bcryptjs');
 
 const DB_PATH = path.join(__dirname, 'priority_manager.db');
 
@@ -31,7 +31,6 @@ async function initDb() {
 
   createSchema();
   seedDefaults();
-  seedAdminUser();
   persist(); // salva o arquivo já com o schema criado
 
   return db;
@@ -109,6 +108,14 @@ function createSchema() {
     );
   `);
 
+  // Migração: adiciona colunas novas ao banco já existente (seguro com IF NOT EXISTS)
+  const taskCols = db.exec(`PRAGMA table_info(tasks)`);
+  const colNames = taskCols[0]?.values?.map(r => r[1]) || [];
+  if (!colNames.includes('progress'))  db.run(`ALTER TABLE tasks ADD COLUMN progress  INTEGER DEFAULT 0`);
+  if (!colNames.includes('checklist')) db.run(`ALTER TABLE tasks ADD COLUMN checklist TEXT    DEFAULT '[]'`);
+  if (!colNames.includes('comments'))  db.run(`ALTER TABLE tasks ADD COLUMN comments  TEXT    DEFAULT '[]'`);
+  if (!colNames.includes('is_critical')) db.run(`ALTER TABLE tasks ADD COLUMN is_critical INTEGER DEFAULT 0`);
+
   // Insere padrões de preferências se não existirem
   db.run(`INSERT OR IGNORE INTO preferences (key, value) VALUES ('theme', 'dark')`);
   db.run(`INSERT OR IGNORE INTO preferences (key, value) VALUES ('sidebarCollapsed', 'false')`);
@@ -136,16 +143,16 @@ function seedDefaults() {
   if (n > 0) return;
 
   const defaults = [
-    { key: 'PENDENTE',           label: 'PENDENTE',           color: '#6b7280', position: 0 },
-    { key: 'LEVANTAMENTO',       label: 'LEVANTAMENTO',       color: '#7c3aed', position: 1 },
+    { key: 'PENDENTE', label: 'PENDENTE', color: '#6b7280', position: 0 },
+    { key: 'LEVANTAMENTO', label: 'LEVANTAMENTO', color: '#7c3aed', position: 1 },
     { key: 'EM_DESENVOLVIMENTO', label: 'EM DESENVOLVIMENTO', color: '#2563eb', position: 2 },
-    { key: 'SUBIR_HML',          label: 'SUBIR EM HML',       color: '#ca8a04', position: 3 },
-    { key: 'HML_TESTE_DEV',      label: 'HML TESTE DEV',      color: '#f97316', position: 4 },
-    { key: 'HML_TESTE_SANTHER',  label: 'HML TESTE SANTHER',  color: '#ea580c', position: 5 },
-    { key: 'OK_HML',             label: 'OK EM HML',          color: '#0d9488', position: 6 },
-    { key: 'SUBIR_PROD',         label: 'SUBIR EM PROD',      color: '#d97706', position: 7 },
-    { key: 'PROD',               label: 'PROD',               color: '#16a34a', position: 8 },
-    { key: 'CONCLUIDO',          label: 'CONCLU\u00cdDO',    color: '#166534', position: 9 },
+    { key: 'SUBIR_HML', label: 'SUBIR EM HML', color: '#ca8a04', position: 3 },
+    { key: 'HML_TESTE_DEV', label: 'HML TESTE DEV', color: '#f97316', position: 4 },
+    { key: 'HML_TESTE_SANTHER', label: 'HML TESTE SANTHER', color: '#ea580c', position: 5 },
+    { key: 'OK_HML', label: 'OK EM HML', color: '#0d9488', position: 6 },
+    { key: 'SUBIR_PROD', label: 'SUBIR EM PROD', color: '#d97706', position: 7 },
+    { key: 'PROD', label: 'PROD', color: '#16a34a', position: 8 },
+    { key: 'CONCLUIDO', label: 'CONCLU\u00cdDO', color: '#166534', position: 9 },
   ];
   defaults.forEach(s => {
     db.run(
@@ -154,21 +161,20 @@ function seedDefaults() {
     );
   });
 
+  /* Seed do usuário admin padrão */
+  seedAdminUser();
 }
 
 /* ============================================================
    SEED ADMIN – cria admin padrão se não existir
 ============================================================ */
 function seedAdminUser() {
-  const hash = bcrypt.hashSync('santher2026', 10);
   const existing = get(`SELECT id FROM users WHERE username = 'admin'`);
-  if (existing) {
-    db.run(`UPDATE users SET password = ?, role = 'admin' WHERE username = 'admin'`, [hash]);
-  } else {
-    db.run(`INSERT INTO users (username, password, role) VALUES ('admin', ?, 'admin')`, [hash]);
-  }
+  if (existing) return;
+  const hash = bcrypt.hashSync('santher2026', 10);
+  db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', ?, 'admin')`, [hash]);
   persist();
-  console.log('  [Auth] Usuário admin configurado. Senha: santher2026');
+  console.log('  [Auth] Usuário admin criado.');
 }
 
 /* ============================================================
@@ -205,7 +211,7 @@ function run(sql, params = []) {
 /** Próximo ID de tarefa */
 function getNextTaskId() {
   const row = get(`SELECT value FROM task_counter WHERE id = 1`);
-  const n   = (row?.value || 0) + 1;
+  const n = (row?.value || 0) + 1;
   db.run(`UPDATE task_counter SET value = ? WHERE id = 1`, [n]);
   persist();
   return `TASK-${String(n).padStart(3, '0')}`;

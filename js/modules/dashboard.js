@@ -186,6 +186,7 @@ const Dashboard = (() => {
         <div class="task-card-top">
           <span class="task-card-id">${task.id}</span>
           <span class="task-card-title">${escapeHtml(task.title)}</span>
+          ${task.isCritical ? '<span class="critical-badge" style="background:var(--danger); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:700;">⚡ CRÍTICA</span>' : ''}
           ${overdue ? '<span class="overdue-badge">⚠ Atrasada</span>' : ''}
         </div>
         <div class="task-card-meta">
@@ -211,14 +212,18 @@ const Dashboard = (() => {
     const list  = document.getElementById('taskList');
     const empty = document.getElementById('emptyState');
 
+    if (!list) return; // página dashboard não está visível
+
     if (tasks.length === 0) {
       list.innerHTML = '';
-      list.appendChild(empty);
-      empty.style.display = 'block';
+      if (empty) {
+        list.appendChild(empty);
+        empty.style.display = 'block';
+      }
       return;
     }
 
-    empty.style.display = 'none';
+    if (empty) empty.style.display = 'none';
     list.innerHTML = tasks.map(renderCard).join('');
 
     list.querySelectorAll('.task-card').forEach(card => {
@@ -310,7 +315,189 @@ function escapeHtml(str) {
 ============================================================ */
 const TaskModal = (() => {
 
+  let _taskId = null; // id da tarefa aberta atualmente
+
+  /* ---- helpers de save inline ---- */
+  async function _patch(data) {
+    try {
+      const updated = await Store.updateTask(_taskId, data);
+      // atualiza cache para próximas aberturas
+      return updated;
+    } catch(e) {
+      UI.toast('Erro ao salvar: ' + e.message, 'error');
+    }
+  }
+
+  /* ---- barra de progresso ---- */
+  function _renderProgress(task) {
+    const pct = task.progress || 0;
+    return `
+    <div class="modal-section">
+      <div class="modal-section-title">📊 Progresso da Tarefa</div>
+      <div class="task-progress-wrap">
+        <div class="task-progress-bar-track">
+          <div class="task-progress-bar-fill" id="modalProgressFill" style="width:${pct}%"></div>
+        </div>
+        <span class="task-progress-pct" id="modalProgressPct">${pct}%</span>
+      </div>
+      <input type="range" min="0" max="100" value="${pct}"
+             class="task-progress-slider" id="modalProgressSlider" />
+    </div>`;
+  }
+
+  /* ---- checklist ---- */
+  function _renderChecklist(task) {
+    const items = task.checklist || [];
+    const done  = items.filter(i => i.done).length;
+    return `
+    <div class="modal-section">
+      <div class="modal-section-title">✅ Checklist (${done}/${items.length})</div>
+      <div class="checklist-list" id="modalChecklist">
+        ${items.map((item, idx) => `
+        <div class="checklist-item" data-idx="${idx}">
+          <label class="checklist-label ${item.done ? 'done' : ''}">
+            <input type="checkbox" class="checklist-cb" data-idx="${idx}" ${item.done ? 'checked' : ''} />
+            <span class="checklist-text">${escapeHtml(item.text)}</span>
+          </label>
+          <button class="checklist-remove" data-idx="${idx}" title="Remover">✕</button>
+        </div>`).join('')}
+      </div>
+      <div class="checklist-add-row">
+        <input type="text" id="modalChecklistInput" placeholder="Novo item..." class="checklist-input" maxlength="120" />
+        <button class="btn btn-ghost btn-sm" id="modalChecklistAdd">+ Adicionar</button>
+      </div>
+    </div>`;
+  }
+
+  /* ---- comentários ---- */
+  function _renderComments(task) {
+    const comments = [...(task.comments || [])].reverse();
+    return `
+    <div class="modal-section">
+      <div class="modal-section-title">💬 Comentários (${task.comments?.length || 0})</div>
+      <div class="comments-add-row">
+        <textarea id="modalCommentInput" placeholder="Escreva um comentário..." class="comment-input" rows="2" maxlength="500"></textarea>
+        <button class="btn btn-primary btn-sm" id="modalCommentAdd">Comentar</button>
+      </div>
+      <div class="comments-list" id="modalCommentsList">
+        ${comments.map((c, i) => {
+          const originalIndex = task.comments.length - 1 - i;
+          return `
+        <div class="comment-entry" style="position: relative;">
+          <div class="comment-meta">
+            <span class="comment-icon">💬</span>
+            <span class="comment-author" style="font-weight: 600; margin-right: 8px;">${escapeHtml(c.user || 'Usuário')}</span>
+            <span class="comment-time">${UI.formatDateTime(c.time)}</span>
+          </div>
+          <div class="comment-text">${escapeHtml(c.text)}</div>
+          <button class="comment-delete-btn btn btn-ghost btn-sm" style="color: var(--danger); font-size: 0.8rem; padding: 2px 4px; position: absolute; right: 8px; top: 8px;" data-idx="${originalIndex}" title="Excluir">✕</button>
+        </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }
+
+  /* ---- bind eventos interativos ---- */
+  function _bindInteractive(task) {
+
+    // -- PROGRESSO --
+    const slider = document.getElementById('modalProgressSlider');
+    const fill   = document.getElementById('modalProgressFill');
+    const pctEl  = document.getElementById('modalProgressPct');
+    if (slider) {
+      slider.addEventListener('input', () => {
+        const v = slider.value;
+        fill.style.width = v + '%';
+        pctEl.textContent = v + '%';
+      });
+      slider.addEventListener('change', async () => {
+        await _patch({ progress: Number(slider.value) });
+      });
+    }
+
+    // -- CHECKLIST --
+    const chkList = document.getElementById('modalChecklist');
+    if (chkList) {
+      // marcar/desmarcar
+      chkList.querySelectorAll('.checklist-cb').forEach(cb => {
+        cb.addEventListener('change', async () => {
+          const idx = Number(cb.dataset.idx);
+          const task = Store.getTask(_taskId);
+          const cl = [...(task.checklist || [])];
+          cl[idx] = { ...cl[idx], done: cb.checked };
+          cb.closest('.checklist-label').classList.toggle('done', cb.checked);
+          // atualiza contador
+          const allItems = chkList.querySelectorAll('.checklist-cb');
+          const doneCount = [...allItems].filter(c => c.checked).length;
+          document.querySelector('#modalChecklist')?.closest('.modal-section')
+            ?.querySelector('.modal-section-title')
+            ?.textContent && (document.querySelector('#modalChecklist').closest('.modal-section').querySelector('.modal-section-title').textContent = `✅ Checklist (${doneCount}/${allItems.length})`);
+          await _patch({ checklist: cl });
+        });
+      });
+
+      // remover item
+      chkList.querySelectorAll('.checklist-remove').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const idx = Number(btn.dataset.idx);
+          const task = Store.getTask(_taskId);
+          const cl = [...(task.checklist || [])];
+          cl.splice(idx, 1);
+          await _patch({ checklist: cl });
+          open(_taskId); // re-render modal
+        });
+      });
+    }
+
+    // -- ADICIONAR ITEM CHECKLIST --
+    const addCheckBtn = document.getElementById('modalChecklistAdd');
+    const checkInput  = document.getElementById('modalChecklistInput');
+    if (addCheckBtn && checkInput) {
+      const addItem = async () => {
+        const text = checkInput.value.trim();
+        if (!text) return;
+        const task = Store.getTask(_taskId);
+        const cl = [...(task.checklist || []), { text, done: false }];
+        await _patch({ checklist: cl });
+        open(_taskId);
+      };
+      addCheckBtn.addEventListener('click', addItem);
+      checkInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } });
+    }
+
+    // -- ADICIONAR COMENTÁRIO --
+    const addCmtBtn  = document.getElementById('modalCommentAdd');
+    const cmtInput   = document.getElementById('modalCommentInput');
+    if (addCmtBtn && cmtInput) {
+      const addComment = async () => {
+        const text = cmtInput.value.trim();
+        if (!text) return;
+        const task = Store.getTask(_taskId);
+        const currentUser = Auth.getCurrentUser();
+        const username = currentUser ? currentUser.username : 'Usuário';
+        const comments = [...(task.comments || []), { text, user: username, time: new Date().toISOString() }];
+        await _patch({ comments });
+        open(_taskId);
+      };
+      addCmtBtn.addEventListener('click', addComment);
+      cmtInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(); } });
+    }
+
+    // -- EXCLUIR COMENTÁRIO --
+    document.querySelectorAll('.comment-delete-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = Number(btn.dataset.idx);
+        const task = Store.getTask(_taskId);
+        const comments = [...(task.comments || [])];
+        comments.splice(idx, 1);
+        await _patch({ comments });
+        open(_taskId);
+      });
+    });
+  }
+
   function open(id) {
+    _taskId = id;
     const task = Store.getTask(id);
     if (!task) return;
 
@@ -330,7 +517,10 @@ const TaskModal = (() => {
           </div>
           <div class="modal-field">
             <span class="modal-field-label">Prioridade</span>
-            <span class="modal-field-value" style="font-size:1.2rem;font-weight:800">${task.priority}</span>
+            <span class="modal-field-value" style="font-size:1.2rem;font-weight:800; display:flex; align-items:center; gap:8px;">
+              ${task.priority}
+              ${task.isCritical ? '<span style="background:var(--danger); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.7rem;">⚡ CRÍTICA</span>' : ''}
+            </span>
           </div>
           <div class="modal-field">
             <span class="modal-field-label">Área Solicitante</span>
@@ -374,19 +564,30 @@ const TaskModal = (() => {
         <p class="modal-description">${escapeHtml(task.notes)}</p>
       </div>` : ''}
 
+      ${_renderProgress(task)}
+      ${_renderChecklist(task)}
+      ${_renderComments(task)}
+
       <div class="modal-section">
-        <div class="modal-section-title">Histórico de Alterações</div>
-        <div class="history-log">
-          ${(task.history || []).slice().reverse().map(h => `
-            <div class="history-entry">
-              <div class="history-dot"></div>
-              <span class="history-time">${UI.formatDateTime(h.time)}</span>
-              <span class="history-text">${escapeHtml(h.text)}</span>
-            </div>
-          `).join('')}
-        </div>
+        <details class="history-details">
+          <summary class="modal-section-title" style="cursor: pointer; user-select: none;">
+            Histórico de Alterações (${task.history?.length || 0})
+            <span style="font-size: 0.8em; opacity: 0.7; font-weight: normal; margin-left: 8px;">(Clique para expandir)</span>
+          </summary>
+          <div class="history-log" style="margin-top: 12px;">
+            ${(task.history || []).slice().reverse().map(h => `
+              <div class="history-entry">
+                <div class="history-dot"></div>
+                <span class="history-time">${UI.formatDateTime(h.time)}</span>
+                <span class="history-text">${escapeHtml(h.text)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </details>
       </div>
     `;
+
+    _bindInteractive(task);
 
     document.getElementById('modalEditBtn').onclick = () => { close(); TaskForm.openEdit(id); };
     document.getElementById('modalDeleteBtn').onclick = async () => {
@@ -407,6 +608,7 @@ const TaskModal = (() => {
 
   function close() {
     document.getElementById('taskModal').classList.add('hidden');
+    _taskId = null;
   }
 
   function init() {
@@ -418,3 +620,4 @@ const TaskModal = (() => {
 
   return { init, open, close };
 })();
+

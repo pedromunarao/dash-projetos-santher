@@ -128,6 +128,54 @@ select option    { background: var(--bg-2); }
 .type-input-group         { display: flex; gap: 8px; }
 .type-input-group select  { flex: 1; }
 
+/* ---- Toggle Switch ---- */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg-3);
+  border: 1px solid var(--border);
+  transition: .3s;
+  border-radius: 20px;
+}
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 2px;
+  bottom: 1px;
+  background-color: var(--text-3);
+  transition: .3s;
+  border-radius: 50%;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+.toggle-switch input:focus-visible + .toggle-slider {
+  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--accent);
+}
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+  background-color: #fff;
+}
+
 /* ---- Responsivo ---- */
 @media (max-width: 900px) {
   .form-grid             { grid-template-columns: 1fr; }

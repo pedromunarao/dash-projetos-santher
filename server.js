@@ -126,7 +126,7 @@ app.delete('/api/auth/users/:id', requireAuth, requireAdmin, (req, res) => {
 ============================================================ */
 app.get('/login', (req, res) => {
   if (req.session?.user) return res.redirect('/');
-  res.sendFile(path.join(__dirname, 'login.html'));
+  res.sendFile(path.join(__dirname, 'views', 'login.html'));
 });
 
 /* ============================================================
@@ -157,6 +157,10 @@ function rowToTask(row) {
     closedAt:    row.closed_at || '',
     notes:       row.notes || '',
     history:     JSON.parse(row.history || '[]'),
+    progress:    row.progress || 0,
+    checklist:   JSON.parse(row.checklist || '[]'),
+    comments:    JSON.parse(row.comments  || '[]'),
+    isCritical:  !!row.is_critical,
   };
 }
 
@@ -216,8 +220,9 @@ app.post('/api/tasks', (req, res) => {
 
   db.run(
     `INSERT INTO tasks (id, title, description, priority, status, area, solicitor,
-                        resources, opened_at, due_date, closed_at, notes, history)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        resources, opened_at, due_date, closed_at, notes, history,
+                        progress, checklist, comments, is_critical)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       d.title || '',
@@ -232,6 +237,10 @@ app.post('/api/tasks', (req, res) => {
       closedAt,
       d.notes || '',
       JSON.stringify([{ time: now, text: 'Tarefa criada.' }]),
+      Number(d.progress) || 0,
+      JSON.stringify(d.checklist || []),
+      JSON.stringify(d.comments  || []),
+      d.isCritical ? 1 : 0,
     ]
   );
 
@@ -255,6 +264,8 @@ app.put('/api/tasks/:id', (req, res) => {
   if (d.dueDate     !== undefined && d.dueDate     !== old.due_date)    changes.push(`Data prevista: ${old.due_date || '—'} → ${d.dueDate || '—'}`);
   if (d.notes       !== undefined && d.notes       !== old.notes)       changes.push('Observações atualizadas.');
   if (d.description !== undefined && d.description !== old.description) changes.push('Descrição atualizada.');
+  if (d.progress    !== undefined && Number(d.progress) !== old.progress) changes.push(`Progresso: ${old.progress || 0}% → ${d.progress}%`);
+  if (d.isCritical  !== undefined && !!d.isCritical !== !!old.is_critical) changes.push(`Marcada como ${d.isCritical ? 'Crítica' : 'Normal'}`);
   if (d.resources   !== undefined) {
     const oldR = JSON.parse(old.resources || '[]').join(', ');
     const newR = (d.resources || []).join(', ');
@@ -271,7 +282,8 @@ app.put('/api/tasks/:id', (req, res) => {
     `UPDATE tasks SET
        title = ?, description = ?, priority = ?, status = ?,
        area = ?, solicitor = ?, resources = ?,
-       due_date = ?, closed_at = ?, notes = ?, history = ?
+       due_date = ?, closed_at = ?, notes = ?, history = ?,
+       progress = ?, checklist = ?, comments = ?, is_critical = ?
      WHERE id = ?`,
     [
       d.title       !== undefined ? d.title               : old.title,
@@ -285,6 +297,10 @@ app.put('/api/tasks/:id', (req, res) => {
       newClosedAt,
       d.notes       !== undefined ? d.notes               : old.notes,
       JSON.stringify(history),
+      d.progress    !== undefined ? Number(d.progress)    : (old.progress || 0),
+      d.checklist   !== undefined ? JSON.stringify(d.checklist) : (old.checklist || '[]'),
+      d.comments    !== undefined ? JSON.stringify(d.comments)  : (old.comments  || '[]'),
+      d.isCritical  !== undefined ? (d.isCritical ? 1 : 0)      : (old.is_critical || 0),
       id,
     ]
   );
@@ -413,7 +429,7 @@ app.put('/api/prefs/:key', (req, res) => {
 ============================================================ */
 app.get(/^(?!\/api).*/, (req, res) => {
   if (!req.session?.user) return res.redirect('/login');
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
 /* ============================================================

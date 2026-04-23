@@ -280,10 +280,19 @@
                 <input type="text" id="taskTitle" placeholder="Nome curto da tarefa" required />
               </div>
 
-              <!-- Prioridade -->
+              <!-- Prioridade & Crítica -->
               <div class="form-group">
                 <label for="taskPriority">Prioridade <span class="required">*</span></label>
-                <input type="number" id="taskPriority" min="0" placeholder="0 = mais importante" required />
+                <div style="display: flex; gap: 16px; align-items: center;">
+                  <input type="number" id="taskPriority" min="0" placeholder="0 = mais importante" required style="flex: 1;" />
+                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; color: var(--danger); font-weight: 700; flex-shrink: 0;">
+                    <div class="toggle-switch" style="width: 32px; height: 18px;">
+                      <input type="checkbox" id="taskIsCritical" />
+                      <span class="toggle-slider"></span>
+                    </div>
+                    É Crítica?
+                  </label>
+                </div>
               </div>
 
               <!-- Status -->
@@ -326,6 +335,22 @@
               <div class="form-group span-2">
                 <label for="taskNotes">Observações</label>
                 <textarea id="taskNotes" rows="3" placeholder="Anotações e atualizações..."></textarea>
+              </div>
+
+              <!-- Progresso -->
+              <div class="form-group span-2">
+                <label for="taskProgress">Progresso: <span id="taskProgressLabel">0%</span></label>
+                <input type="range" id="taskProgress" min="0" max="100" value="0" class="task-progress-slider" />
+              </div>
+
+              <!-- Checklist -->
+              <div class="form-group span-2">
+                <label>Checklist</label>
+                <div id="formChecklistList" class="checklist-list"></div>
+                <div class="checklist-add-row" style="margin-top:8px">
+                  <input type="text" id="formChecklistInput" placeholder="Novo item..." class="checklist-input" maxlength="120" />
+                  <button type="button" class="btn btn-ghost btn-sm" id="formChecklistAdd">+ Adicionar</button>
+                </div>
               </div>
             </div>
 
@@ -584,6 +609,21 @@
             </button>
           </div>
           <div class="tv-controls">
+            <div class="tv-auto-switch-controls" style="display: flex; align-items: center; gap: 12px; margin-right: 16px; background: var(--bg-surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+              <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-2); font-weight: 500;">
+                <div class="toggle-switch">
+                  <input type="checkbox" id="tvAutoSwitchToggle" />
+                  <span class="toggle-slider"></span>
+                </div>
+                Auto-play
+              </label>
+              <select id="tvAutoSwitchInterval" class="filter-select" style="padding: 2px 6px; font-size: 0.8rem; height: auto;">
+                <option value="15000">15s</option>
+                <option value="30000" selected>30s</option>
+                <option value="60000">1m</option>
+                <option value="300000">5m</option>
+              </select>
+            </div>
             <span class="tv-refresh-badge" id="tvRefreshBadge">Atualiza em 30s</span>
             <span class="tv-clock" id="tvClock">--:--:--</span>
             <button class="btn btn-ghost btn-sm" id="tvFullscreenBtn" title="Tela Cheia">⛶ Tela Cheia</button>
