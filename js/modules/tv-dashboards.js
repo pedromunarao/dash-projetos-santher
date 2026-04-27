@@ -298,7 +298,7 @@ const TVDashboards = (() => {
               ${UI.isOverdue(t) ? '<span style="color:var(--danger);font-size:0.68rem;font-weight:800;flex-shrink:0">⚠</span>' : ''}
             </div>
           `).join('')
-        + (myTasks.length > 4 ? `<div class="tv-resource-no-tasks">+${myTasks.length - 4} mais...</div>` : '');
+        + (myTasks.length > 4 ? `<div class="tv-resource-no-tasks tv-more-tasks-btn" data-resource="${escapeHtml(r.name)}" style="cursor:pointer; color:var(--accent); font-weight:600; padding:4px; border-radius:4px; transition:background 0.2s;" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background='transparent'">+${myTasks.length - 4} mais... (ver todas)</div>` : '');
 
       return `
         <div class="tv-resource-card">
@@ -447,6 +447,55 @@ const TVDashboards = (() => {
         if (autoSwitchEnabled) startAutoSwitch();
       });
     }
+
+    // Modal de tarefas do recurso (delegação de evento)
+    const tvContent = document.getElementById('tvContent');
+    if (tvContent) {
+      tvContent.addEventListener('click', (e) => {
+        const btn = e.target.closest('.tv-more-tasks-btn');
+        if (btn) {
+          showResourceTasks(btn.dataset.resource);
+        }
+      });
+    }
+
+    const modalCloseBtn = document.getElementById('resourceTasksModalClose');
+    if (modalCloseBtn) {
+      modalCloseBtn.addEventListener('click', () => {
+        document.getElementById('resourceTasksModal')?.classList.add('hidden');
+      });
+    }
+  }
+
+  /* ==============================================================
+     MODAL DE TAREFAS DO RECURSO
+  ============================================================== */
+  function showResourceTasks(resourceName) {
+    const tasks = Store.getTasks().filter(t => (t.resources || []).includes(resourceName) && t.status !== 'CONCLUIDO');
+    const modal = document.getElementById('resourceTasksModal');
+    const title = document.getElementById('resourceTasksModalTitle');
+    const list = document.getElementById('resourceTasksModalList');
+
+    if (!modal || !title || !list) return;
+
+    title.textContent = `Tarefas ativas: ${resourceName}`;
+
+    list.innerHTML = tasks.length === 0
+      ? '<div style="color:var(--text-3); font-style:italic;">Nenhuma tarefa ativa.</div>'
+      : tasks.map(t => `
+        <div style="background:var(--bg-3); padding:12px; border-radius:var(--radius-sm); margin-bottom:8px; border-left:3px solid ${getStatusColor(t.status)}; display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <span style="font-weight:600; color:var(--text); line-height:1.3;">${escapeHtml(t.title)}</span>
+            <span style="font-size:0.75rem; font-family:monospace; color:var(--text-3); margin-left:8px; flex-shrink:0;">${escapeHtml(t.id)}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem;">
+            <span style="color:var(--text-2);">${escapeHtml(t.area || '—')}</span>
+            ${UI.statusBadge(t.status)}
+          </div>
+        </div>
+      `).join('');
+
+    modal.classList.remove('hidden');
   }
 
   return { init, render };

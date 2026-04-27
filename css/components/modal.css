@@ -282,4 +282,4 @@
 
 .comment-icon { font-size: 0.75rem; }
 .comment-time { font-size: 0.72rem; color: var(--text-3); font-weight: 600; }
-.comment-text { font-size: 0.85rem; color: var(--text-2); line-height: 1.5; word-break: break-word; }
+.comment-text { font-size: 0.85rem; color: var(--text-2); line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
