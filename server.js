@@ -278,8 +278,13 @@ app.put('/api/tasks/:id', (req, res) => {
   const history = JSON.parse(old.history || '[]');
   if (changes.length) history.push({ time: now, text: changes.join(' | ') });
 
-  const newStatus   = d.status !== undefined ? d.status : old.status;
-  const newClosedAt = (newStatus === 'CONCLUIDO' && old.status !== 'CONCLUIDO') ? now : (old.closed_at || '');
+  const newStatus = d.status !== undefined ? d.status : old.status;
+  let newClosedAt = old.closed_at || '';
+  if (newStatus === 'CONCLUIDO' && old.status !== 'CONCLUIDO') {
+    newClosedAt = now;
+  } else if (newStatus !== 'CONCLUIDO' && old.status === 'CONCLUIDO') {
+    newClosedAt = '';
+  }
 
   db.run(
     `UPDATE tasks SET

@@ -16,7 +16,7 @@
 const App = (() => {
 
   const PAGE_TITLES = {
-    dashboard:       'Dashboard',
+    dashboard:       'Arquivo de Projetos',
     kanban:          'Kanban Board',
     'new-task':      'Nova Tarefa',
     resources:       'Recursos',
@@ -42,7 +42,10 @@ const App = (() => {
 
     document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
 
-    if (page === 'dashboard')      Dashboard.render();
+    if (page === 'dashboard') {
+      Dashboard.render();
+      Dashboard.setTab('archive');
+    }
     if (page === 'kanban')         Kanban.render();
     if (page === 'new-task' && !document.getElementById('editTaskId').value) TaskForm.openNew();
     if (page === 'resources')      Resources.render();

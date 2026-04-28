@@ -15,6 +15,7 @@ const Dashboard = (() => {
   let chartStatusInstance = null;
   let chartAreaInstance = null;
   let chartTypeInstance = null;
+  let currentTab = 'active'; // 'active' | 'archive'
 
   /* ---- Gráficos (Chart.js) ---- */
   function renderCharts() {
@@ -188,6 +189,8 @@ const Dashboard = (() => {
 
     return Store.getTasks()
       .filter(t => {
+        // Na aba Ativas, excluir concluídas (a menos que filtro explícito)
+        if (currentTab === 'active' && !status && t.status === 'CONCLUIDO') return false;
         if (search && !t.title.toLowerCase().includes(search) && !t.id.toLowerCase().includes(search)) return false;
         if (status && t.status  !== status)              return false;
         if (area   && t.area    !== area)                return false;
@@ -248,7 +251,7 @@ const Dashboard = (() => {
     const list  = document.getElementById('taskList');
     const empty = document.getElementById('emptyState');
 
-    if (!list) return; // página dashboard não está visível
+    if (!list) return;
 
     if (tasks.length === 0) {
       list.innerHTML = '';
@@ -270,6 +273,110 @@ const Dashboard = (() => {
       card.addEventListener('drop',      onDrop);
       card.addEventListener('dragend',   onDragEnd);
     });
+  }
+
+  /* ---- Arquivo de concluídos ---- */
+  function renderArchive() {
+    const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    const area   = document.getElementById('filterArea')?.value   || '';
+    const res    = document.getElementById('filterResource')?.value || '';
+    const sol    = document.getElementById('filterSolicitor')?.value || '';
+    const ptype  = document.getElementById('filterProjectType')?.value || '';
+
+    const concluded = Store.getTasks()
+      .filter(t => {
+        if (t.status !== 'CONCLUIDO') return false;
+        if (search && !t.title.toLowerCase().includes(search) && !t.id.toLowerCase().includes(search)) return false;
+        if (area  && t.area      !== area)                     return false;
+        if (res   && !(t.resources || []).includes(res))       return false;
+        if (sol   && t.solicitor !== sol)                      return false;
+        if (ptype && (t.projectType || 'SISTEMAS') !== ptype)  return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const da = a.closedAt ? new Date(a.closedAt) : new Date(0);
+        const db = b.closedAt ? new Date(b.closedAt) : new Date(0);
+        return db - da; // mais recentes primeiro
+      });
+
+    const archiveEl = document.getElementById('archiveList');
+    const emptyArch = document.getElementById('emptyArchive');
+    if (!archiveEl) return;
+
+    if (concluded.length === 0) {
+      const msg = search || area || res || sol || ptype
+        ? 'Nenhum projeto concluído encontrado para os filtros aplicados.'
+        : 'Nenhum projeto concluído ainda.';
+      archiveEl.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🗄️</div>
+          <h3>${msg}</h3>
+          ${search || area || res || sol || ptype
+            ? '<p>Tente limpar os filtros para ver todos os concluídos.</p>'
+            : '<p>Projetos concluídos aparecerão aqui como histórico.</p>'}
+        </div>`;
+      return;
+    }
+
+    archiveEl.innerHTML = `
+      <div class="archive-header-bar">
+        <span class="archive-header-title">🗄️ Projetos Concluídos</span>
+        <span class="archive-header-count">${concluded.length} projeto${concluded.length !== 1 ? 's' : ''}</span>
+      </div>
+      ${concluded.map(task => {
+        const resources = task.resources || [];
+        const closedStr = task.closedAt
+          ? new Date(task.closedAt).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' })
+          : '—';
+        const progress  = task.progress || 0;
+        return `
+        <div class="task-card task-card--archived"
+             data-id="${task.id}"
+             id="card-arch-${task.id}">
+          <div class="task-priority-badge">
+            <span style="font-size:0.6rem;color:var(--text-3)">PRIO</span>
+            <span class="priority-num">${task.priority}</span>
+          </div>
+          <div class="task-info">
+            <div class="task-card-top">
+              <span class="task-card-id">${task.id}</span>
+              <span class="task-card-title">${escapeHtml(task.title)}</span>
+              ${projectTypeBadge(task.projectType || 'SISTEMAS')}
+            </div>
+            <div class="task-card-meta">
+              <span class="task-meta-item"><span class="meta-icon">🏢</span>${escapeHtml(task.area)}</span>
+              <span class="task-meta-item"><span class="meta-icon">👤</span>${escapeHtml(task.solicitor)}</span>
+              <span class="archive-closed-badge">✅ Concluído em ${closedStr}</span>
+            </div>
+            ${progress === 100 ? '' : `
+            <div style="margin-top:5px;height:3px;background:var(--bg-4);border-radius:999px;overflow:hidden;max-width:300px">
+              <div style="width:${progress}%;height:100%;background:#22c55e;border-radius:999px"></div>
+            </div>`}
+          </div>
+          <div class="task-card-right">
+            <div class="resource-chips">
+              ${resources.slice(0, 3).map(r => `<span class="resource-chip">${escapeHtml(r)}</span>`).join('')}
+              ${resources.length > 3 ? `<span class="resource-chip">+${resources.length - 3}</span>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+
+    archiveEl.querySelectorAll('.task-card--archived').forEach(card => {
+      card.addEventListener('click', () => TaskModal.open(card.dataset.id));
+    });
+  }
+
+  /* ---- Atualiza contadores das tabs ---- */
+  function updateTabCounts() {
+    const all = Store.getTasks();
+    const activeCount  = all.filter(t => t.status !== 'CONCLUIDO').length;
+    const archiveCount = all.filter(t => t.status === 'CONCLUIDO').length;
+    const elA = document.getElementById('tabActiveCount');
+    const elB = document.getElementById('tabArchiveCount');
+    if (elA) elA.textContent = activeCount;
+    if (elB) elB.textContent = archiveCount;
   }
 
   /* ---- Drag & drop (reordenação de prioridade) ---- */
@@ -306,7 +413,12 @@ const Dashboard = (() => {
     renderMetrics();
     renderCharts();
     populateFilters();
-    renderList();
+    updateTabCounts();
+    if (currentTab === 'active') {
+      renderList();
+    } else {
+      renderArchive();
+    }
   }
 
   /* ---- Init ---- */
@@ -328,11 +440,39 @@ const Dashboard = (() => {
       render();
     });
 
+    // Tabs
+    document.querySelectorAll('.dashboard-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentTab = btn.dataset.tab;
+        document.querySelectorAll('.dashboard-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const taskListEl   = document.getElementById('taskList');
+        const archiveListEl = document.getElementById('archiveList');
+
+        if (currentTab === 'active') {
+          taskListEl?.classList.remove('hidden');
+          archiveListEl?.classList.add('hidden');
+          renderList();
+        } else {
+          taskListEl?.classList.add('hidden');
+          archiveListEl?.classList.remove('hidden');
+          renderArchive();
+        }
+      });
+    });
+
     document.querySelector('#emptyState [data-page]')
       ?.addEventListener('click', e => App.navigate(e.currentTarget.dataset.page));
   }
 
-  return { init, render };
+  /* ---- Controle externo de tabs ---- */
+  function setTab(tabId) {
+    const btn = document.querySelector(`.dashboard-tab[data-tab="${tabId}"]`);
+    if (btn) btn.click();
+  }
+
+  return { init, render, setTab };
 })();
 
 /* ============================================================
@@ -639,6 +779,64 @@ const TaskModal = (() => {
     `;
 
     _bindInteractive(task);
+
+    // Botão Concluir / Badge concluído / Botão Reabrir
+    const concludeBtn    = document.getElementById('modalConcluirBtn');
+    const concludedBadge = document.getElementById('modalConcludedBadge');
+    const concludedDate  = document.getElementById('modalConcludedDate');
+    const reopenBtn      = document.getElementById('modalReopenBtn');
+
+    if (task.status === 'CONCLUIDO') {
+      if (concludeBtn)    concludeBtn.classList.add('hidden');
+      if (concludedBadge) concludedBadge.classList.remove('hidden');
+      if (reopenBtn)      reopenBtn.classList.remove('hidden');
+      if (concludedDate && task.closedAt) {
+        concludedDate.textContent = new Date(task.closedAt)
+          .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+
+      if (reopenBtn) {
+        reopenBtn.onclick = async () => {
+          const ok = await UI.confirm('Reabrir Projeto', `Deseja reabrir "${task.title}"? O status voltará para PENDENTE.`);
+          if (!ok) return;
+          try {
+            // Volta para o primeiro status configurado (geralmente PENDENTE)
+            const firstStatus = STATUSES.length > 0 ? STATUSES[0].key : 'PENDENTE';
+            await Store.updateTask(id, { status: firstStatus });
+            close();
+            try { Dashboard.render(); } catch (e) {}
+            try { Kanban.render(); } catch (e) {}
+            UI.toast('Projeto reaberto.', 'info');
+          } catch (err) {
+            UI.toast('Erro ao reabrir: ' + err.message, 'error');
+          }
+        };
+      }
+
+    } else {
+      if (concludeBtn)    concludeBtn.classList.remove('hidden');
+      if (concludedBadge) concludedBadge.classList.add('hidden');
+      if (reopenBtn)      reopenBtn.classList.add('hidden');
+
+      if (concludeBtn) {
+        concludeBtn.onclick = async () => {
+          const ok = await UI.confirm(
+            'Concluir Projeto',
+            `Deseja marcar "${task.title}" como CONCLUÍDO? A data de conclusão será registrada automaticamente.`
+          );
+          if (!ok) return;
+          try {
+            await Store.updateTask(id, { status: 'CONCLUIDO' });
+            close();
+            try { Dashboard.render(); } catch (e) {}
+            try { Kanban.render(); } catch (e) {}
+            UI.toast('Projeto concluído com sucesso! 🎉', 'success');
+          } catch (err) {
+            UI.toast('Erro ao concluir: ' + err.message, 'error');
+          }
+        };
+      }
+    }
 
     document.getElementById('modalEditBtn').onclick = () => { close(); TaskForm.openEdit(id); };
     document.getElementById('modalDeleteBtn').onclick = async () => {
