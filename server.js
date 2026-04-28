@@ -161,6 +161,7 @@ function rowToTask(row) {
     checklist:   JSON.parse(row.checklist || '[]'),
     comments:    JSON.parse(row.comments  || '[]'),
     isCritical:  !!row.is_critical,
+    projectType: row.project_type || 'SISTEMAS',
   };
 }
 
@@ -221,8 +222,8 @@ app.post('/api/tasks', (req, res) => {
   db.run(
     `INSERT INTO tasks (id, title, description, priority, status, area, solicitor,
                         resources, opened_at, due_date, closed_at, notes, history,
-                        progress, checklist, comments, is_critical)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        progress, checklist, comments, is_critical, project_type)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       d.title || '',
@@ -241,6 +242,7 @@ app.post('/api/tasks', (req, res) => {
       JSON.stringify(d.checklist || []),
       JSON.stringify(d.comments  || []),
       d.isCritical ? 1 : 0,
+      d.projectType === 'INFRAESTRUTURA' ? 'INFRAESTRUTURA' : 'SISTEMAS',
     ]
   );
 
@@ -265,7 +267,8 @@ app.put('/api/tasks/:id', (req, res) => {
   if (d.notes       !== undefined && d.notes       !== old.notes)       changes.push('Observações atualizadas.');
   if (d.description !== undefined && d.description !== old.description) changes.push('Descrição atualizada.');
   if (d.progress    !== undefined && Number(d.progress) !== old.progress) changes.push(`Progresso: ${old.progress || 0}% → ${d.progress}%`);
-  if (d.isCritical  !== undefined && !!d.isCritical !== !!old.is_critical) changes.push(`Marcada como ${d.isCritical ? 'Crítica' : 'Normal'}`);
+  if (d.isCritical   !== undefined && !!d.isCritical !== !!old.is_critical) changes.push(`Marcada como ${d.isCritical ? 'Crítica' : 'Normal'}`);
+  if (d.projectType  !== undefined && d.projectType !== old.project_type)   changes.push(`Tipo: ${old.project_type || 'SISTEMAS'} → ${d.projectType}`);
   if (d.resources   !== undefined) {
     const oldR = JSON.parse(old.resources || '[]').join(', ');
     const newR = (d.resources || []).join(', ');
@@ -283,7 +286,7 @@ app.put('/api/tasks/:id', (req, res) => {
        title = ?, description = ?, priority = ?, status = ?,
        area = ?, solicitor = ?, resources = ?,
        due_date = ?, closed_at = ?, notes = ?, history = ?,
-       progress = ?, checklist = ?, comments = ?, is_critical = ?
+       progress = ?, checklist = ?, comments = ?, is_critical = ?, project_type = ?
      WHERE id = ?`,
     [
       d.title       !== undefined ? d.title               : old.title,
@@ -301,6 +304,7 @@ app.put('/api/tasks/:id', (req, res) => {
       d.checklist   !== undefined ? JSON.stringify(d.checklist) : (old.checklist || '[]'),
       d.comments    !== undefined ? JSON.stringify(d.comments)  : (old.comments  || '[]'),
       d.isCritical  !== undefined ? (d.isCritical ? 1 : 0)      : (old.is_critical || 0),
+      d.projectType !== undefined ? (d.projectType === 'INFRAESTRUTURA' ? 'INFRAESTRUTURA' : 'SISTEMAS') : (old.project_type || 'SISTEMAS'),
       id,
     ]
   );

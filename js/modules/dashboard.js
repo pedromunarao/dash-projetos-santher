@@ -14,6 +14,7 @@ const Dashboard = (() => {
   let dragSrcId = null;
   let chartStatusInstance = null;
   let chartAreaInstance = null;
+  let chartTypeInstance = null;
 
   /* ---- Gráficos (Chart.js) ---- */
   function renderCharts() {
@@ -79,6 +80,36 @@ const Dashboard = (() => {
         }
       });
     }
+
+    // Type Chart (Sistemas vs Infraestrutura)
+    const sistCount  = tasks.filter(t => (t.projectType || 'SISTEMAS') === 'SISTEMAS').length;
+    const infraCount = tasks.filter(t => t.projectType === 'INFRAESTRUTURA').length;
+
+    const ctxType = document.getElementById('chartType');
+    if (ctxType && ctxType.offsetParent !== null) {
+      if (chartTypeInstance) chartTypeInstance.destroy();
+      chartTypeInstance = new Chart(ctxType, {
+        type: 'doughnut',
+        data: {
+          labels: ['Sistemas', 'Infraestrutura'],
+          datasets: [{
+            data: [sistCount, infraCount],
+            backgroundColor: ['rgba(99,102,241,0.8)', 'rgba(249,115,22,0.8)'],
+            borderWidth: 0,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-2').trim() }
+            }
+          },
+          cutout: '65%',
+        },
+      });
+    }
   }
 
   /* ---- Métricas ---- */
@@ -105,6 +136,8 @@ const Dashboard = (() => {
       { label: 'Em Atraso',            value: overdue,   sub: 'prazo ultrapassado',           color: overdue > 0 ? '#ef4444' : '#22c55e' },
       { label: 'Concluídas no Mês',    value: doneMonth, sub: `de ${total} no total`,         color: '#22c55e' },
       { label: 'Recursos Disponíveis', value: avail,     sub: `${busy} ocupados`,             color: '#0d9488' },
+      { label: 'Projetos de Sistemas',       value: tasks.filter(t => (t.projectType || 'SISTEMAS') === 'SISTEMAS').length,        sub: 'tipo sistemas',       color: '#6366f1' },
+      { label: 'Projetos de Infraestrutura', value: tasks.filter(t => t.projectType === 'INFRAESTRUTURA').length, sub: 'tipo infraestrutura',  color: '#f97316' },
     ];
 
     document.getElementById('metricsGrid').innerHTML = cards.map(c => `
@@ -151,6 +184,7 @@ const Dashboard = (() => {
     const area   = document.getElementById('filterArea').value;
     const res    = document.getElementById('filterResource').value;
     const sol    = document.getElementById('filterSolicitor').value;
+    const ptype  = document.getElementById('filterProjectType').value;
 
     return Store.getTasks()
       .filter(t => {
@@ -159,6 +193,7 @@ const Dashboard = (() => {
         if (area   && t.area    !== area)                return false;
         if (res    && !(t.resources || []).includes(res)) return false;
         if (sol    && t.solicitor !== sol)               return false;
+        if (ptype  && (t.projectType || 'SISTEMAS') !== ptype) return false;
         return true;
       })
       .sort((a, b) => a.priority - b.priority);
@@ -186,6 +221,7 @@ const Dashboard = (() => {
         <div class="task-card-top">
           <span class="task-card-id">${task.id}</span>
           <span class="task-card-title">${escapeHtml(task.title)}</span>
+          ${projectTypeBadge(task.projectType || 'SISTEMAS')}
           ${task.isCritical ? '<span class="critical-badge" style="background:var(--danger); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:700;">⚡ CRÍTICA</span>' : ''}
           ${overdue ? '<span class="overdue-badge">⚠ Atrasada</span>' : ''}
         </div>
@@ -275,7 +311,7 @@ const Dashboard = (() => {
 
   /* ---- Init ---- */
   function init() {
-    const filterIds = ['searchInput', 'filterStatus', 'filterArea', 'filterResource', 'filterSolicitor'];
+    const filterIds = ['searchInput', 'filterStatus', 'filterArea', 'filterResource', 'filterSolicitor', 'filterProjectType'];
     filterIds.forEach(id => {
       const el  = document.getElementById(id);
       const evt = id === 'searchInput' ? 'input' : 'change';
@@ -288,6 +324,7 @@ const Dashboard = (() => {
       document.getElementById('filterArea').value       = '';
       document.getElementById('filterResource').value   = '';
       document.getElementById('filterSolicitor').value  = '';
+      document.getElementById('filterProjectType').value = '';
       render();
     });
 
@@ -308,6 +345,16 @@ function escapeHtml(str) {
     .replace(/</g,  '&lt;')
     .replace(/>/g,  '&gt;')
     .replace(/"/g,  '&quot;');
+}
+
+/* ============================================================
+   Badge de tipo de projeto (global – usado por Dashboard e TaskModal)
+============================================================ */
+function projectTypeBadge(type) {
+  if (type === 'INFRAESTRUTURA') {
+    return '<span class="project-type-badge pt-infra">🔧 Infraestrutura</span>';
+  }
+  return '<span class="project-type-badge pt-sistemas">💻 Sistemas</span>';
 }
 
 /* ============================================================
@@ -514,6 +561,10 @@ const TaskModal = (() => {
           <div class="modal-field">
             <span class="modal-field-label">Status</span>
             <span class="modal-field-value">${UI.statusBadge(task.status)}</span>
+          </div>
+          <div class="modal-field">
+            <span class="modal-field-label">Tipo de Projeto</span>
+            <span class="modal-field-value">${projectTypeBadge(task.projectType || 'SISTEMAS')}</span>
           </div>
           <div class="modal-field">
             <span class="modal-field-label">Prioridade</span>

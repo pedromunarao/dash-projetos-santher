@@ -70,6 +70,7 @@ const TaskForm = (() => {
     document.getElementById('taskIsCritical').checked  = false;
     document.getElementById('taskProgress').value      = 0;
     document.getElementById('taskProgressLabel').textContent = '0%';
+    document.getElementById('taskProjectType').value   = 'SISTEMAS';
     document.getElementById('formChecklistList').innerHTML = '';
     populateSelects();
     buildResourcePicker([]);
@@ -101,6 +102,8 @@ const TaskForm = (() => {
     const prog = task.progress || 0;
     document.getElementById('taskProgress').value = prog;
     document.getElementById('taskProgressLabel').textContent = prog + '%';
+
+    document.getElementById('taskProjectType').value = task.projectType || 'SISTEMAS';
 
     buildChecklistForm(task.checklist || []);
     buildResourcePicker(task.resources || []);
@@ -186,6 +189,7 @@ const TaskForm = (() => {
       resources:   getSelectedResources(),
       progress:    parseInt(document.getElementById('taskProgress').value) || 0,
       isCritical:  document.getElementById('taskIsCritical').checked,
+      projectType: document.getElementById('taskProjectType').value,
       checklist:   getFormChecklist(),
     };
 

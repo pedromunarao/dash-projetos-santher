@@ -132,6 +132,12 @@
               <canvas id="chartArea"></canvas>
             </div>
           </div>
+          <div class="chart-card">
+            <h4>💻 Sistemas vs 🔧 Infraestrutura</h4>
+            <div class="chart-canvas-container">
+              <canvas id="chartType"></canvas>
+            </div>
+          </div>
         </section>
 
         <!-- FILTERS -->
@@ -152,6 +158,11 @@
             </select>
             <select id="filterSolicitor" class="filter-select">
               <option value="">Todos os Solicitantes</option>
+            </select>
+            <select id="filterProjectType" class="filter-select">
+              <option value="">Todos os Tipos</option>
+              <option value="SISTEMAS">💻 Sistemas</option>
+              <option value="INFRAESTRUTURA">🔧 Infraestrutura</option>
             </select>
           </div>
           <button class="btn btn-ghost" id="clearFilters">✕ Limpar</button>
@@ -280,7 +291,7 @@
                 <input type="text" id="taskTitle" placeholder="Nome curto da tarefa" required />
               </div>
 
-              <!-- Prioridade & Crítica -->
+              <!-- Prioridade & Crítica & Tipo -->
               <div class="form-group">
                 <label for="taskPriority">Prioridade <span class="required">*</span></label>
                 <div style="display: flex; gap: 16px; align-items: center;">
@@ -293,6 +304,15 @@
                     É Crítica?
                   </label>
                 </div>
+              </div>
+
+              <!-- Tipo de Projeto -->
+              <div class="form-group">
+                <label for="taskProjectType">Tipo de Projeto <span class="required">*</span></label>
+                <select id="taskProjectType" required>
+                  <option value="SISTEMAS">💻 Sistemas</option>
+                  <option value="INFRAESTRUTURA">🔧 Infraestrutura</option>
+                </select>
               </div>
 
               <!-- Status -->

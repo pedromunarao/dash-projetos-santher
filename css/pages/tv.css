@@ -90,6 +90,133 @@
    PAINEL 1 — VISÃO GERAL
    ============================================================= */
 
+/* ---- Health Banner ---- */
+.tv-health-banner {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 28px;
+  margin-bottom: 20px;
+  border-top: 3px solid var(--health-color, var(--accent));
+  flex-wrap: wrap;
+}
+
+.tv-health-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.tv-health-icon { font-size: 2.4rem; line-height: 1; }
+
+.tv-health-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tv-health-label {
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.tv-health-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.tv-health-ring { width: 80px; height: 80px; }
+
+.tv-health-score-label {
+  font-size: 0.9rem;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+.tv-health-stats {
+  display: flex;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.tv-health-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.tv-health-stat span {
+  font-size: 1.9rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--text);
+}
+
+.tv-health-stat label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+/* Status distribution bar inside health banner */
+.tv-status-dist-bar {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tv-status-dist-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.tv-status-dist-track {
+  display: flex;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-4);
+  gap: 2px;
+}
+
+.tv-status-dist-seg {
+  height: 100%;
+  min-width: 4px;
+  transition: flex 0.8s cubic-bezier(0.25,0.8,0.25,1);
+}
+
+.tv-status-dist-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.tv-status-dist-legend span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- Metric Cards ---- */
 .tv-overview-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -101,41 +228,85 @@
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 24px 28px;
+  padding: 20px 22px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   position: relative;
   overflow: hidden;
+  animation: tv-slide-up 0.4s ease forwards;
+  animation-delay: var(--delay, 0ms);
+  opacity: 0;
   transition: transform var(--transition), box-shadow var(--transition);
+}
+
+@keyframes tv-slide-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .tv-metric-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 4px;
+  height: 3px;
   background: var(--m-color, var(--accent));
 }
 
 .tv-metric-card::after {
   content: '';
   position: absolute;
-  bottom: -24px; right: -24px;
-  width: 110px; height: 110px;
+  bottom: -28px; right: -28px;
+  width: 100px; height: 100px;
   border-radius: 50%;
   background: var(--m-color, var(--accent));
-  opacity: 0.07;
+  opacity: 0.06;
+  pointer-events: none;
 }
 
 .tv-metric-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
 
-.tv-metric-icon  { font-size: 1.8rem; }
-.tv-metric-label { font-size: 0.75rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
-.tv-metric-value { font-size: 3.2rem; font-weight: 900; color: var(--text); line-height: 1; }
-.tv-metric-sub   { font-size: 0.82rem; color: var(--text-2); }
+/* Danger pulse animation for overdue/critical */
+.tv-metric-card--danger {
+  border-color: rgba(239,68,68,0.3);
+  animation: tv-slide-up 0.4s ease forwards, tv-danger-pulse 2.5s ease-in-out 0.5s infinite;
+  animation-delay: var(--delay, 0ms), 0.5s;
+}
 
-/* Charts row */
+@keyframes tv-danger-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+  50%       { box-shadow: 0 0 0 5px rgba(239,68,68,0.12); }
+}
+
+.tv-metric-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.tv-metric-icon  { font-size: 1.6rem; line-height: 1; }
+.tv-metric-pct   { font-size: 0.78rem; font-weight: 800; opacity: 0.9; }
+.tv-metric-label { font-size: 0.68rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; }
+.tv-metric-value { font-size: 2.8rem; font-weight: 900; color: var(--text); line-height: 1; }
+.tv-metric-sub   { font-size: 0.78rem; color: var(--text-2); }
+
+.tv-metric-bar-track {
+  margin-top: 6px;
+  height: 4px;
+  background: var(--bg-4);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.tv-metric-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 1s cubic-bezier(0.25,0.8,0.25,1);
+  opacity: 0.85;
+}
+
+/* ---- Charts row ---- */
 .tv-charts-row {
   display: grid;
   grid-template-columns: 1fr 1.6fr;
@@ -151,81 +322,268 @@
 }
 
 .tv-chart-card h3 {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 16px 0;
+  margin: 0 0 14px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .tv-chart-canvas {
   position: relative;
-  height: 260px;
+  height: 240px;
 }
 
 /* Barras horizontais de área */
-.tv-area-bars { display: flex; flex-direction: column; gap: 14px; }
+.tv-area-bars { display: flex; flex-direction: column; gap: 12px; }
 
 .tv-area-bar-row {
   display: grid;
-  grid-template-columns: 130px 1fr 36px;
+  grid-template-columns: 120px 1fr 36px;
   align-items: center;
   gap: 12px;
 }
 
-.tv-area-bar-label { font-size: 0.82rem; font-weight: 600; color: var(--text-2); text-align: right; }
-.tv-area-bar-track { background: var(--bg-4); border-radius: 999px; height: 14px; overflow: hidden; }
+.tv-area-bar-label { font-size: 0.8rem; font-weight: 600; color: var(--text-2); text-align: right; }
+.tv-area-bar-track { background: var(--bg-4); border-radius: 999px; height: 12px; overflow: hidden; }
 .tv-area-bar-fill  { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--accent), #818cf8); transition: width 0.9s cubic-bezier(0.25,0.8,0.25,1); }
 .tv-area-bar-count { font-size: 0.85rem; font-weight: 800; color: var(--text); }
 
-/* Tarefas críticas */
+/* ---- Bottom row (Críticas + Atrasadas) ---- */
+.tv-bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ---- Critical Sections ---- */
 .tv-critical-section {
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 18px 20px;
 }
 
-.tv-critical-section h3 {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 16px 0;
+.tv-critical-section--overdue {
+  border-top: 3px solid rgba(239,68,68,0.5);
+}
+
+.tv-critical-section-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.tv-critical-section-header h3 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tv-section-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.tv-section-badge--critical {
+  background: rgba(251,146,60,0.15);
+  color: #fb923c;
+  border: 1px solid rgba(251,146,60,0.3);
+}
+
+.tv-section-badge--overdue {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.3);
 }
 
 .tv-critical-list { display: flex; flex-direction: column; gap: 8px; }
 
+/* Redesigned critical item */
 .tv-critical-item {
-  display: grid;
-  grid-template-columns: 48px 1fr auto auto;
+  display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: var(--bg-3);
   border-radius: var(--radius-sm);
   border-left: 4px solid var(--status-color, #888);
-  transition: background var(--transition);
+  transition: background var(--transition), transform var(--transition);
 }
 
-.tv-critical-item:hover { background: var(--bg-4); }
+.tv-critical-item:hover { background: var(--bg-4); transform: translateX(2px); }
 
-.tv-critical-prio  { font-size: 1.3rem; font-weight: 900; color: var(--text); text-align: center; }
-.tv-critical-title { font-size: 0.95rem; font-weight: 600; color: var(--text); }
-.tv-critical-area  { font-size: 0.78rem; color: var(--text-3); margin-top: 2px; }
+.tv-critical-item--overdue {
+  background: rgba(239,68,68,0.06);
+  border-left-color: #ef4444;
+}
+
+.tv-critical-prio-badge {
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.tv-critical-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tv-critical-title { font-size: 0.9rem; font-weight: 600; color: var(--text); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.tv-critical-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--text-3);
+  flex-wrap: wrap;
+}
+
+.tv-critical-progress-track {
+  height: 3px;
+  background: var(--bg-4);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.tv-critical-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.25,0.8,0.25,1);
+  opacity: 0.75;
+}
+
+.tv-critical-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.tv-overdue-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ef4444;
+  white-space: nowrap;
+  animation: tv-blink 1.5s ease-in-out infinite;
+}
+
+@keyframes tv-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.tv-progress-pct {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-3);
+}
+
+/* Empty state for lists */
+.tv-empty-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 16px;
+  color: var(--text-3);
+}
+
+.tv-empty-list span { font-size: 2rem; }
+.tv-empty-list p    { font-size: 0.85rem; font-style: italic; margin: 0; }
 
 
 /* =============================================================
    PAINEL 2 — PIPELINE
    ============================================================= */
 
+/* ---- Barra de filtro de tipo ---- */
+.tv-pipeline-filter-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 10px 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tv-type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-3);
+  color: var(--text-2);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.tv-type-btn:hover { background: var(--bg-4); color: var(--text); }
+
+/* Estado ativo – Todos */
+.tv-type-btn.active {
+  background: var(--bg-4);
+  color: var(--text);
+  border-color: var(--text-3);
+  box-shadow: inset 0 0 0 1px var(--text-3);
+}
+
+/* Estado ativo – Sistemas */
+.tv-type-btn-sist.active-sist {
+  background: rgba(99, 102, 241, 0.18);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.35);
+}
+
+/* Estado ativo – Infraestrutura */
+.tv-type-btn-infra.active-infra {
+  background: rgba(249, 115, 22, 0.18);
+  color: #fb923c;
+  border-color: rgba(249, 115, 22, 0.5);
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.35);
+}
+
+/* Label informativo (autoplay) dentro da barra */
+.tv-pipeline-filter-label {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: var(--text-3);
+  font-style: italic;
+}
+
 .tv-pipeline {
   display: flex;
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 12px;
-  height: calc(100vh - var(--topbar-h) - 120px);
+  height: calc(100vh - var(--topbar-h) - 170px);
 }
 
 /* Scroll invisível mas funcional */
@@ -395,6 +753,38 @@
 .tv-resource-task-title           { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tv-resource-no-tasks             { font-size: 0.78rem; color: var(--text-3); font-style: italic; padding: 4px 0; }
 
+/* ---- Cabeçalho de seção por tipo (Equipe) ---- */
+.tv-task-type-header {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 8px;
+  border-radius: 4px;
+  margin-top: 6px;
+  margin-bottom: 2px;
+}
+
+.tv-task-type-header:first-child { margin-top: 0; }
+
+.tv-task-type-header.pt-sistemas {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+  border-left: 3px solid #6366f1;
+}
+
+.tv-task-type-header.pt-infra {
+  background: rgba(249, 115, 22, 0.12);
+  color: #fb923c;
+  border-left: 3px solid #f97316;
+}
+
+/* ---- 6 métricas na visão geral ---- */
+.tv-overview-grid.cols-6 {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+
 /* ---- Fullscreen ---- */
 :fullscreen        .sidebar, :-webkit-full-screen .sidebar { display: none !important; }
 :fullscreen        .main-content, :-webkit-full-screen .main-content { margin-left: 0 !important; }
@@ -403,8 +793,22 @@
 :fullscreen        .tv-pipeline, :-webkit-full-screen .tv-pipeline { height: calc(100vh - 70px); }
 
 /* ---- Responsivo TV ---- */
+@media (max-width: 1400px) {
+  .tv-overview-grid.cols-6 { grid-template-columns: repeat(3, 1fr); }
+}
+
 @media (max-width: 1200px) {
-  .tv-overview-grid  { grid-template-columns: repeat(2, 1fr); }
-  .tv-team-summary   { grid-template-columns: repeat(2, 1fr); }
-  .tv-charts-row     { grid-template-columns: 1fr; }
+  .tv-overview-grid.cols-6 { grid-template-columns: repeat(2, 1fr); }
+  .tv-overview-grid         { grid-template-columns: repeat(2, 1fr); }
+  .tv-team-summary          { grid-template-columns: repeat(2, 1fr); }
+  .tv-charts-row            { grid-template-columns: 1fr; }
+  .tv-bottom-row            { grid-template-columns: 1fr; }
+  .tv-health-banner         { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .tv-health-stats          { gap: 16px; }
+}
+
+@media (max-width: 768px) {
+  .tv-overview-grid.cols-6 { grid-template-columns: repeat(2, 1fr); }
+  .tv-health-banner        { padding: 16px; }
+  .tv-health-stats         { flex-wrap: wrap; gap: 12px; }
 }

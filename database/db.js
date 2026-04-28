@@ -114,7 +114,8 @@ function createSchema() {
   if (!colNames.includes('progress'))  db.run(`ALTER TABLE tasks ADD COLUMN progress  INTEGER DEFAULT 0`);
   if (!colNames.includes('checklist')) db.run(`ALTER TABLE tasks ADD COLUMN checklist TEXT    DEFAULT '[]'`);
   if (!colNames.includes('comments'))  db.run(`ALTER TABLE tasks ADD COLUMN comments  TEXT    DEFAULT '[]'`);
-  if (!colNames.includes('is_critical')) db.run(`ALTER TABLE tasks ADD COLUMN is_critical INTEGER DEFAULT 0`);
+  if (!colNames.includes('is_critical'))    db.run(`ALTER TABLE tasks ADD COLUMN is_critical    INTEGER DEFAULT 0`);
+  if (!colNames.includes('project_type'))   db.run(`ALTER TABLE tasks ADD COLUMN project_type   TEXT    DEFAULT 'SISTEMAS'`);
 
   // Insere padrões de preferências se não existirem
   db.run(`INSERT OR IGNORE INTO preferences (key, value) VALUES ('theme', 'dark')`);
