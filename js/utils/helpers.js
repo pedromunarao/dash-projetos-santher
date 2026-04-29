@@ -147,6 +147,14 @@ const UI = (() => {
     );
   }
 
+  /* ---- Rótulo de Prioridade ---- */
+  function getPriorityLabel(p) {
+    if (p === 0) return 'Alta';
+    if (p === 1) return 'Média';
+    if (p === 2) return 'Baixa';
+    return p;
+  }
+
   /* ---- API pública ---- */
   return {
     toast,
@@ -158,5 +166,6 @@ const UI = (() => {
     isOverdue,
     hexToRgba,
     getTasksForResource,
+    getPriorityLabel,
   };
 })();

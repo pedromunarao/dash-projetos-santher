@@ -56,9 +56,9 @@ const Kanban = (() => {
       <div class="kanban-card-id">${task.id}</div>
       <div class="kanban-card-title">${escapeHtml(task.title)}</div>
       <div class="kanban-card-meta">
-        <span class="kanban-card-area">${escapeHtml(task.area)}</span>
+        <span class="kanban-card-area">${escapeHtml((task.area || []).join(', '))}</span>
         ${overdue ? '<span class="overdue-badge">⚠ Atrasada</span>' : ''}
-        <span class="resource-chip" style="font-size:0.68rem">P${task.priority}</span>
+        <span class="resource-chip" style="font-size:0.68rem; padding: 2px 6px;">${UI.getPriorityLabel(task.priority)}</span>
       </div>
     </div>`;
   }

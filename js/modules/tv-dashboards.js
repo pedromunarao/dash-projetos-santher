@@ -16,8 +16,10 @@ const TVDashboards = (() => {
   let clockTimer = null;
   let chartInstance = null;
   let autoSwitchTimer = null;
-  let autoSwitchEnabled = false;
-  let autoSwitchIntervalMs = 30000;
+  let autoSwitchEnabled = localStorage.getItem('tvAutoSwitchEnabled') === 'true';
+  let autoSwitchIntervalMs = Number(localStorage.getItem('tvAutoSwitchIntervalMs')) || 30000;
+  let savedRefresh = localStorage.getItem('tvRefreshInterval');
+  let refreshIntervalSeconds = savedRefresh !== null ? Number(savedRefresh) : 30;
 
   // Painéis visíveis nas abas (manual)
   const PANELS = [
@@ -66,8 +68,8 @@ const TVDashboards = (() => {
     const available  = resources.filter(r => r.status === 'DISPONIVEL').length;
     const busy       = resources.filter(r => r.status === 'OCUPADO').length;
     const onLeave    = resources.filter(r => ['FERIAS','AFASTADO'].includes(r.status)).length;
-    const sistCount  = tasks.filter(t => (t.projectType || 'SISTEMAS') === 'SISTEMAS').length;
-    const infraCount = tasks.filter(t => t.projectType === 'INFRAESTRUTURA').length;
+    const sistCount  = tasks.filter(t => (t.projectType || []).includes('SISTEMAS') || (!t.projectType || t.projectType.length === 0)).length;
+    const infraCount = tasks.filter(t => (t.projectType || []).includes('INFRAESTRUTURA')).length;
     const critical   = tasks.filter(t => t.isCritical && t.status !== 'CONCLUIDO').length;
 
     /* ---------- Health Score ---------- */
@@ -140,7 +142,10 @@ const TVDashboards = (() => {
 
     /* ---------- Barras por área ---------- */
     const areaCounts = {};
-    tasks.forEach(t => { const a = t.area || 'Outros'; areaCounts[a] = (areaCounts[a] || 0) + 1; });
+    tasks.forEach(t => { 
+      const areas = Array.isArray(t.area) && t.area.length > 0 ? t.area : ['Outros'];
+      areas.forEach(a => areaCounts[a] = (areaCounts[a] || 0) + 1);
+    });
     const maxArea = Math.max(...Object.values(areaCounts), 1);
     const areaRows = Object.entries(areaCounts)
       .sort((a, b) => b[1] - a[1])
@@ -190,11 +195,11 @@ const TVDashboards = (() => {
       const isOv       = UI.isOverdue(t);
       return `
         <div class="tv-critical-item${isOv ? ' tv-critical-item--overdue' : ''}" style="--status-color:${getStatusColor(t.status)}">
-          <div class="tv-critical-prio-badge" style="background:${getStatusColor(t.status)}22;color:${getStatusColor(t.status)}">#${t.priority}</div>
+          <div class="tv-critical-prio-badge" style="background:${getStatusColor(t.status)}22;color:${getStatusColor(t.status)}">${UI.getPriorityLabel(t.priority)}</div>
           <div class="tv-critical-body">
             <div class="tv-critical-title">${escapeHtml(t.title)}</div>
             <div class="tv-critical-meta">
-              <span>${escapeHtml(t.area || '—')}</span>
+              <span>${escapeHtml((t.area || []).join(', ') || '—')}</span>
               <span>•</span>
               <span>${escapeHtml(t.solicitor || '—')}</span>
               ${dueDateStr ? `<span>• 📅 ${dueDateStr}</span>` : ''}
@@ -374,7 +379,7 @@ const TVDashboards = (() => {
     const allTasks = Store.getTasks();
     const tasks = pipelineTypeFilter === 'TODOS'
       ? allTasks
-      : allTasks.filter(t => (t.projectType || 'SISTEMAS') === pipelineTypeFilter);
+      : allTasks.filter(t => (t.projectType || []).includes(pipelineTypeFilter) || (!t.projectType || t.projectType.length === 0 && pipelineTypeFilter === 'SISTEMAS'));
 
     // Barra de filtro de tipo
     const filterBar = `
@@ -390,15 +395,20 @@ const TVDashboards = (() => {
       const items = colTasks.length === 0
         ? '<div style="color:var(--text-3);font-size:0.8rem;padding:8px 12px;font-style:italic">Vazio</div>'
         : colTasks.map(t => {
-            const ptBadge = t.projectType === 'INFRAESTRUTURA'
-              ? '<span class="project-type-badge pt-infra" style="font-size:0.6rem;padding:2px 6px;">🔧 Infra</span>'
-              : '<span class="project-type-badge pt-sistemas" style="font-size:0.6rem;padding:2px 6px;">💻 Sist</span>';
+            const types = t.projectType || [];
+            let ptBadge = '';
+            if (types.length === 0 || types.includes('SISTEMAS')) {
+               ptBadge += '<span class="project-type-badge pt-sistemas" style="font-size:0.6rem;padding:2px 6px;margin-right:2px">💻 Sist</span>';
+            }
+            if (types.includes('INFRAESTRUTURA')) {
+               ptBadge += '<span class="project-type-badge pt-infra" style="font-size:0.6rem;padding:2px 6px;margin-right:2px">🔧 Infra</span>';
+            }
             return `
             <div class="tv-pipeline-item" style="--col-color:${s.color}">
               <span class="tv-pipeline-item-id">${escapeHtml(t.id)}</span>
               ${pipelineTypeFilter === 'TODOS' ? ptBadge : ''}
               <span class="tv-pipeline-item-title">${escapeHtml(t.title)}</span>
-              <span class="tv-pipeline-item-meta">${escapeHtml(t.area || '—')} • Prio ${t.priority}</span>
+              <span class="tv-pipeline-item-meta">${escapeHtml((t.area || []).join(', ') || '—')} • Prio ${UI.getPriorityLabel(t.priority)}</span>
               ${UI.isOverdue(t) ? '<span class="tv-pipeline-item-overdue">⚠ ATRASADA</span>' : ''}
             </div>`;
           }).join('');
@@ -592,21 +602,27 @@ const TVDashboards = (() => {
   }
 
   /* ==============================================================
-     AUTO-REFRESH (30 s)
+     AUTO-REFRESH
   ============================================================== */
 
   function startRefresh() {
     clearInterval(refreshTimer);
-    let countdown = 30;
     const badge = document.getElementById('tvRefreshBadge');
+    
+    if (refreshIntervalSeconds === 0) {
+      if (badge) badge.textContent = 'Atualização Desligada';
+      return;
+    }
+
+    let countdown = refreshIntervalSeconds;
     if (badge) badge.textContent = `Atualiza em ${countdown}s`;
 
     refreshTimer = setInterval(() => {
       countdown--;
       if (badge) badge.textContent = `Atualiza em ${countdown}s`;
       if (countdown <= 0) {
-        countdown = 30;
-        renderContent();
+        countdown = refreshIntervalSeconds;
+        window.location.reload(true); // F5 forçado
       }
     }, 1000);
   }
@@ -672,13 +688,28 @@ const TVDashboards = (() => {
     const toggleEl = document.getElementById('tvAutoSwitchToggle');
     const selectEl = document.getElementById('tvAutoSwitchInterval');
     if (toggleEl && selectEl) {
+      toggleEl.checked = autoSwitchEnabled;
+      selectEl.value = autoSwitchIntervalMs;
+
       toggleEl.addEventListener('change', (e) => {
         autoSwitchEnabled = e.target.checked;
+        localStorage.setItem('tvAutoSwitchEnabled', autoSwitchEnabled);
         startAutoSwitch();
       });
       selectEl.addEventListener('change', (e) => {
         autoSwitchIntervalMs = Number(e.target.value);
+        localStorage.setItem('tvAutoSwitchIntervalMs', autoSwitchIntervalMs);
         if (autoSwitchEnabled) startAutoSwitch();
+      });
+    }
+
+    const refreshSelectEl = document.getElementById('tvRefreshIntervalSelect');
+    if (refreshSelectEl) {
+      refreshSelectEl.value = refreshIntervalSeconds;
+      refreshSelectEl.addEventListener('change', (e) => {
+        refreshIntervalSeconds = Number(e.target.value);
+        localStorage.setItem('tvRefreshInterval', refreshIntervalSeconds);
+        startRefresh();
       });
     }
 

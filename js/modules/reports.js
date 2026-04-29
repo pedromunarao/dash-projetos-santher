@@ -24,7 +24,7 @@ const Reports = (() => {
     const maxStatus = Math.max(...byStatus.map(b => b.count), 1);
 
     const byArea = AREAS
-      .map(a => ({ label: a, count: tasks.filter(t => t.area === a).length }))
+      .map(a => ({ label: a, count: tasks.filter(t => (t.area || []).includes(a)).length }))
       .filter(x => x.count > 0)
       .sort((a, b) => b.count - a.count);
     const maxArea = Math.max(...byArea.map(b => b.count), 1);
@@ -87,10 +87,10 @@ const Reports = (() => {
                 <td><span style="font-family:monospace;color:var(--accent);font-weight:700">${t.id}</span></td>
                 <td>${escapeHtml(t.title)}</td>
                 <td>${UI.statusBadge(t.status)}</td>
-                <td>${escapeHtml(t.area)}</td>
+                <td>${escapeHtml((t.area || []).join(', '))}</td>
                 <td>${escapeHtml(t.solicitor)}</td>
                 <td style="color:var(--danger);font-weight:600">${UI.formatDateForDisplay(t.dueDate)}</td>
-                <td><strong>${t.priority}</strong></td>
+                <td><strong>${UI.getPriorityLabel(t.priority)}</strong></td>
               </tr>`).join('')}
             </tbody>
           </table>`}
@@ -148,9 +148,9 @@ const Reports = (() => {
     const rows = tasks.map(t => [
       t.id,
       `"${(t.title       || '').replace(/"/g, '""')}"`,
-      t.priority,
+      UI.getPriorityLabel(t.priority),
       getStatusLabel(t.status),
-      t.area,
+      `"${(t.area || []).join('; ').replace(/"/g, '""')}"`,
       `"${(t.solicitor   || '').replace(/"/g, '""')}"`,
       `"${(t.resources   || []).join('; ').replace(/"/g, '""')}"`,
       UI.formatDateTime(t.openedAt),

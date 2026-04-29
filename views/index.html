@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,9 +8,12 @@
   <title>Priority Manager – Santher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="css/main.css" />
+  <link rel="icon" type="image/png" href="assets/santher-logo-icon.png" />
 </head>
+
 <body>
   <!-- LOADER OVERLAY – exibido enquanto dados são carregados do banco -->
   <div id="appLoader" class="app-loader">
@@ -227,7 +231,8 @@
 
         <!-- Info banner -->
         <div class="kconfig-info">
-          ℹ️ Arraste os buckets para reordenar. As alterações são refletidas imediatamente no Kanban, Dashboard e Painéis de TV.
+          ℹ️ Arraste os buckets para reordenar. As alterações são refletidas imediatamente no Kanban, Dashboard e
+          Painéis de TV.
         </div>
 
         <!-- Preview dos buckets em ordem -->
@@ -257,18 +262,30 @@
             <div class="kconfig-new-palette">
               <span class="kconfig-palette-label">Paleta rápida:</span>
               <div class="kconfig-palette-dots">
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#6b7280" style="background:#6b7280" title="Cinza"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#7c3aed" style="background:#7c3aed" title="Violeta"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#2563eb" style="background:#2563eb" title="Azul"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#0891b2" style="background:#0891b2" title="Ciano"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#059669" style="background:#059669" title="Esmeralda"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#16a34a" style="background:#16a34a" title="Verde"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#ca8a04" style="background:#ca8a04" title="Amarelo"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#d97706" style="background:#d97706" title="Âmbar"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#db2777" style="background:#db2777" title="Rosa"></button>
-                <button class="kconfig-preset-dot kc-new-preset" data-color="#7e22ce" style="background:#7e22ce" title="Roxo"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#6b7280" style="background:#6b7280"
+                  title="Cinza"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#7c3aed" style="background:#7c3aed"
+                  title="Violeta"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#2563eb" style="background:#2563eb"
+                  title="Azul"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#0891b2" style="background:#0891b2"
+                  title="Ciano"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#059669" style="background:#059669"
+                  title="Esmeralda"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#16a34a" style="background:#16a34a"
+                  title="Verde"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#ca8a04" style="background:#ca8a04"
+                  title="Amarelo"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#d97706" style="background:#d97706"
+                  title="Âmbar"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#ea580c" style="background:#ea580c"
+                  title="Laranja"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#dc2626" style="background:#dc2626"
+                  title="Vermelho"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#db2777" style="background:#db2777"
+                  title="Rosa"></button>
+                <button class="kconfig-preset-dot kc-new-preset" data-color="#7e22ce" style="background:#7e22ce"
+                  title="Roxo"></button>
               </div>
             </div>
             <div class="form-actions">
@@ -318,8 +335,13 @@
               <div class="form-group">
                 <label for="taskPriority">Prioridade <span class="required">*</span></label>
                 <div style="display: flex; gap: 16px; align-items: center;">
-                  <input type="number" id="taskPriority" min="0" placeholder="0 = mais importante" required style="flex: 1;" />
-                  <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; color: var(--danger); font-weight: 700; flex-shrink: 0;">
+                  <select id="taskPriority" required style="flex: 1;">
+                    <option value="0">Alta</option>
+                    <option value="1">Média</option>
+                    <option value="2" selected>Baixa</option>
+                  </select>
+                  <label
+                    style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; color: var(--danger); font-weight: 700; flex-shrink: 0;">
                     <div class="toggle-switch" style="width: 32px; height: 18px;">
                       <input type="checkbox" id="taskIsCritical" />
                       <span class="toggle-slider"></span>
@@ -331,11 +353,8 @@
 
               <!-- Tipo de Projeto -->
               <div class="form-group">
-                <label for="taskProjectType">Tipo de Projeto <span class="required">*</span></label>
-                <select id="taskProjectType" required>
-                  <option value="SISTEMAS">💻 Sistemas</option>
-                  <option value="INFRAESTRUTURA">🔧 Infraestrutura</option>
-                </select>
+                <label>Tipo de Projeto <span class="required">*</span></label>
+                <div class="resources-picker" id="projectTypePicker" style="min-height: 42px;"></div>
               </div>
 
               <!-- Status -->
@@ -346,8 +365,8 @@
 
               <!-- Área Solicitante -->
               <div class="form-group">
-                <label for="taskArea">Área Solicitante <span class="required">*</span></label>
-                <select id="taskArea" required></select>
+                <label>Área Solicitante <span class="required">*</span></label>
+                <div class="resources-picker" id="areaPicker" style="min-height: 42px;"></div>
               </div>
 
               <!-- Solicitante -->
@@ -391,7 +410,8 @@
                 <label>Checklist</label>
                 <div id="formChecklistList" class="checklist-list"></div>
                 <div class="checklist-add-row" style="margin-top:8px">
-                  <input type="text" id="formChecklistInput" placeholder="Novo item..." class="checklist-input" maxlength="120" />
+                  <input type="text" id="formChecklistInput" placeholder="Novo item..." class="checklist-input"
+                    maxlength="120" />
                   <button type="button" class="btn btn-ghost btn-sm" id="formChecklistAdd">+ Adicionar</button>
                 </div>
               </div>
@@ -458,7 +478,8 @@
         <div class="cad-header">
           <div>
             <h2>📒 Cadastros do Sistema</h2>
-            <p class="cad-header-desc">Gerencie áreas solicitantes, tipos de recurso, recursos e buckets do Kanban em um único lugar.</p>
+            <p class="cad-header-desc">Gerencie áreas solicitantes, tipos de recurso, recursos e buckets do Kanban em um
+              único lugar.</p>
           </div>
         </div>
 
@@ -496,8 +517,8 @@
 
             <!-- Adicionar nova área -->
             <div class="cad-add-row">
-              <input type="text" id="cad-new-area" class="cad-add-input"
-                placeholder="Nova área (ex: FISCAL)" maxlength="40" />
+              <input type="text" id="cad-new-area" class="cad-add-input" placeholder="Nova área (ex: FISCAL)"
+                maxlength="40" />
               <button class="btn btn-primary" id="cad-add-area-btn">✓ Adicionar</button>
             </div>
           </div>
@@ -516,8 +537,8 @@
             <div class="cad-chips-area" id="cad-types-list"></div>
 
             <div class="cad-add-row">
-              <input type="text" id="cad-new-type" class="cad-add-input"
-                placeholder="Novo tipo (ex: ANALISTA DE DADOS)" maxlength="40" />
+              <input type="text" id="cad-new-type" class="cad-add-input" placeholder="Novo tipo (ex: ANALISTA DE DADOS)"
+                maxlength="40" />
               <button class="btn btn-primary" id="cad-add-type-btn">✓ Adicionar</button>
             </div>
           </div>
@@ -570,7 +591,8 @@
           <div class="cad-section-card">
             <div class="cad-section-card-header">
               <h3>🗂️ Buckets do Kanban</h3>
-              <span class="cad-section-desc">Arraste para reordenar. Clique na cor para alterar. Exclusão só é possível se não houver tarefas vinculadas.</span>
+              <span class="cad-section-desc">Arraste para reordenar. Clique na cor para alterar. Exclusão só é possível
+                se não houver tarefas vinculadas.</span>
             </div>
 
             <!-- Lista de buckets -->
@@ -588,18 +610,30 @@
             <div class="cad-palette-row">
               <span class="cad-palette-label">Paleta rápida:</span>
               <div class="cad-palette-dots">
-                <button class="cad-bucket-preset-dot" data-color="#6b7280" style="background:#6b7280" title="Cinza"></button>
-                <button class="cad-bucket-preset-dot" data-color="#7c3aed" style="background:#7c3aed" title="Violeta"></button>
-                <button class="cad-bucket-preset-dot" data-color="#2563eb" style="background:#2563eb" title="Azul"></button>
-                <button class="cad-bucket-preset-dot" data-color="#0891b2" style="background:#0891b2" title="Ciano"></button>
-                <button class="cad-bucket-preset-dot" data-color="#059669" style="background:#059669" title="Esmeralda"></button>
-                <button class="cad-bucket-preset-dot" data-color="#16a34a" style="background:#16a34a" title="Verde"></button>
-                <button class="cad-bucket-preset-dot" data-color="#ca8a04" style="background:#ca8a04" title="Amarelo"></button>
-                <button class="cad-bucket-preset-dot" data-color="#d97706" style="background:#d97706" title="Âmbar"></button>
-                <button class="cad-bucket-preset-dot" data-color="#ea580c" style="background:#ea580c" title="Laranja"></button>
-                <button class="cad-bucket-preset-dot" data-color="#dc2626" style="background:#dc2626" title="Vermelho"></button>
-                <button class="cad-bucket-preset-dot" data-color="#db2777" style="background:#db2777" title="Rosa"></button>
-                <button class="cad-bucket-preset-dot" data-color="#7e22ce" style="background:#7e22ce" title="Roxo"></button>
+                <button class="cad-bucket-preset-dot" data-color="#6b7280" style="background:#6b7280"
+                  title="Cinza"></button>
+                <button class="cad-bucket-preset-dot" data-color="#7c3aed" style="background:#7c3aed"
+                  title="Violeta"></button>
+                <button class="cad-bucket-preset-dot" data-color="#2563eb" style="background:#2563eb"
+                  title="Azul"></button>
+                <button class="cad-bucket-preset-dot" data-color="#0891b2" style="background:#0891b2"
+                  title="Ciano"></button>
+                <button class="cad-bucket-preset-dot" data-color="#059669" style="background:#059669"
+                  title="Esmeralda"></button>
+                <button class="cad-bucket-preset-dot" data-color="#16a34a" style="background:#16a34a"
+                  title="Verde"></button>
+                <button class="cad-bucket-preset-dot" data-color="#ca8a04" style="background:#ca8a04"
+                  title="Amarelo"></button>
+                <button class="cad-bucket-preset-dot" data-color="#d97706" style="background:#d97706"
+                  title="Âmbar"></button>
+                <button class="cad-bucket-preset-dot" data-color="#ea580c" style="background:#ea580c"
+                  title="Laranja"></button>
+                <button class="cad-bucket-preset-dot" data-color="#dc2626" style="background:#dc2626"
+                  title="Vermelho"></button>
+                <button class="cad-bucket-preset-dot" data-color="#db2777" style="background:#db2777"
+                  title="Rosa"></button>
+                <button class="cad-bucket-preset-dot" data-color="#7e22ce" style="background:#7e22ce"
+                  title="Roxo"></button>
               </div>
             </div>
           </div>
@@ -612,15 +646,16 @@
           <div class="cad-section-card">
             <div class="cad-section-card-header">
               <h3>🔑 Gerenciamento de Usuários</h3>
-              <span class="cad-section-desc">Cadastre e remova usuários do sistema. Somente administradores podem acessar esta seção.</span>
+              <span class="cad-section-desc">Cadastre e remova usuários do sistema. Somente administradores podem
+                acessar esta seção.</span>
             </div>
 
             <!-- Formulário de novo usuário -->
             <div class="cad-add-row cad-user-add-row">
-              <input type="text" id="cad-new-user-username" class="cad-add-input"
-                placeholder="Nome de usuário" maxlength="40" autocapitalize="none" />
-              <input type="password" id="cad-new-user-password" class="cad-add-input"
-                placeholder="Senha" maxlength="100" />
+              <input type="text" id="cad-new-user-username" class="cad-add-input" placeholder="Nome de usuário"
+                maxlength="40" autocapitalize="none" />
+              <input type="password" id="cad-new-user-password" class="cad-add-input" placeholder="Senha"
+                maxlength="100" />
               <select id="cad-new-user-role" class="filter-select">
                 <option value="user">Usuário</option>
                 <option value="admin">Administrador</option>
@@ -652,19 +687,37 @@
             </button>
           </div>
           <div class="tv-controls">
-            <div class="tv-auto-switch-controls" style="display: flex; align-items: center; gap: 12px; margin-right: 16px; background: var(--bg-surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
-              <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-2); font-weight: 500;">
+            <div class="tv-auto-switch-controls"
+              style="display: flex; align-items: center; gap: 12px; margin-right: 16px; background: var(--bg-surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+              <label
+                style="font-size: 0.85rem; display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-2); font-weight: 500;">
                 <div class="toggle-switch">
                   <input type="checkbox" id="tvAutoSwitchToggle" />
                   <span class="toggle-slider"></span>
                 </div>
                 Auto-play
               </label>
-              <select id="tvAutoSwitchInterval" class="filter-select" style="padding: 2px 6px; font-size: 0.8rem; height: auto;">
+              <select id="tvAutoSwitchInterval" class="filter-select"
+                style="padding: 2px 6px; font-size: 0.8rem; height: auto;">
                 <option value="15000">15s</option>
                 <option value="30000" selected>30s</option>
                 <option value="60000">1m</option>
                 <option value="300000">5m</option>
+              </select>
+            </div>
+            <div class="tv-auto-switch-controls"
+              style="display: flex; align-items: center; gap: 8px; margin-right: 16px; background: var(--bg-surface); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); box-shadow: var(--shadow-sm);">
+              <label for="tvRefreshIntervalSelect"
+                style="font-size: 0.85rem; color: var(--text-2); font-weight: 500;">Att:</label>
+              <select id="tvRefreshIntervalSelect" class="filter-select"
+                style="padding: 2px 6px; font-size: 0.8rem; height: auto;">
+                <option value="0">Desligado</option>
+                <option value="10">10s</option>
+                <option value="15">15s</option>
+                <option value="30" selected>30s</option>
+                <option value="60">1m</option>
+                <option value="120">2m</option>
+                <option value="300">5m</option>
               </select>
             </div>
             <span class="tv-refresh-badge" id="tvRefreshBadge">Atualiza em 30s</span>
@@ -691,8 +744,10 @@
         </div>
         <div class="modal-header-actions">
           <button class="btn-conclude" id="modalConcluirBtn" title="Marcar como Concluído">✅ Concluir Projeto</button>
-          <span class="modal-concluded-badge hidden" id="modalConcludedBadge">✅ Concluído em <span id="modalConcludedDate"></span></span>
-          <button class="btn btn-ghost btn-sm hidden" id="modalReopenBtn" style="color:var(--text);border-color:var(--border)">🔄 Reabrir</button>
+          <span class="modal-concluded-badge hidden" id="modalConcludedBadge">✅ Concluído em <span
+              id="modalConcludedDate"></span></span>
+          <button class="btn btn-ghost btn-sm hidden" id="modalReopenBtn"
+            style="color:var(--text);border-color:var(--border)">🔄 Reabrir</button>
           <button class="btn btn-ghost btn-sm" id="modalEditBtn">✏️ Editar</button>
           <button class="btn btn-danger btn-sm" id="modalDeleteBtn">🗑️ Excluir</button>
           <button class="modal-close" id="modalClose">✕</button>
@@ -712,7 +767,8 @@
         </div>
       </div>
       <div class="modal-body" style="padding:16px;">
-        <div class="tv-resource-tasks-list" id="resourceTasksModalList" style="max-height: 50vh; overflow-y: auto; padding-right:8px;"></div>
+        <div class="tv-resource-tasks-list" id="resourceTasksModalList"
+          style="max-height: 50vh; overflow-y: auto; padding-right:8px;"></div>
       </div>
     </div>
   </div>
@@ -749,4 +805,5 @@
   <script src="js/modules/cadastros.js"></script>
   <script src="js/app.js"></script>
 </body>
+
 </html>

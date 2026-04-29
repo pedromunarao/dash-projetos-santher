@@ -14,10 +14,6 @@ const TaskForm = (() => {
   function populateSelects() {
     document.getElementById('taskStatus').innerHTML =
       STATUSES.map(s => `<option value="${s.key}">${s.label}</option>`).join('');
-
-    document.getElementById('taskArea').innerHTML =
-      '<option value="">Selecione a área</option>' +
-      Store.getAreas().map(a => `<option value="${a}">${a}</option>`).join('');
   }
 
   /* ---- Constrói o picker de recursos ---- */
@@ -53,10 +49,67 @@ const TaskForm = (() => {
     return Array.from(document.querySelectorAll('#resourcesPicker input:checked')).map(cb => cb.value);
   }
 
-  /* ---- Próxima prioridade sugerida ---- */
-  function getNextPriority() {
-    const tasks = Store.getTasks();
-    return tasks.length === 0 ? 0 : Math.max(...tasks.map(t => t.priority)) + 1;
+  /* ---- Constrói o picker de Áreas ---- */
+  function buildAreaPicker(selectedAreas = []) {
+    const areas = Store.getAreas();
+    const picker = document.getElementById('areaPicker');
+
+    if (areas.length === 0) {
+      picker.innerHTML = '<span style="color:var(--text-3);font-size:0.82rem">Nenhuma área cadastrada.</span>';
+      return;
+    }
+
+    picker.innerHTML = areas.map(a => {
+      const checked = selectedAreas.includes(a);
+      return `
+      <label class="resource-checkbox-item ${checked ? 'checked' : ''}" data-name="${escapeHtml(a)}">
+        <input type="checkbox" value="${escapeHtml(a)}" ${checked ? 'checked' : ''} />
+        ${escapeHtml(a)}
+      </label>`;
+    }).join('');
+
+    picker.querySelectorAll('.resource-checkbox-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const cb = item.querySelector('input');
+        cb.checked = !cb.checked;
+        item.classList.toggle('checked', cb.checked);
+      });
+    });
+  }
+
+  /* ---- Constrói o picker de Tipos de Projeto ---- */
+  function buildProjectTypePicker(selectedTypes = []) {
+    const types = [
+      { key: 'SISTEMAS', label: '💻 Sistemas' },
+      { key: 'INFRAESTRUTURA', label: '🔧 Infraestrutura' }
+    ];
+    const picker = document.getElementById('projectTypePicker');
+
+    picker.innerHTML = types.map(t => {
+      const checked = selectedTypes.includes(t.key);
+      return `
+      <label class="resource-checkbox-item ${checked ? 'checked' : ''}" data-name="${escapeHtml(t.key)}">
+        <input type="checkbox" value="${escapeHtml(t.key)}" ${checked ? 'checked' : ''} />
+        ${t.label}
+      </label>`;
+    }).join('');
+
+    picker.querySelectorAll('.resource-checkbox-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const cb = item.querySelector('input');
+        cb.checked = !cb.checked;
+        item.classList.toggle('checked', cb.checked);
+      });
+    });
+  }
+
+  /* ---- Retorna seleções ---- */
+  function getSelectedAreas() {
+    return Array.from(document.querySelectorAll('#areaPicker input:checked')).map(cb => cb.value);
+  }
+
+  function getSelectedProjectTypes() {
+    return Array.from(document.querySelectorAll('#projectTypePicker input:checked')).map(cb => cb.value);
   }
 
   /* ---- Abre formulário para NOVA tarefa ---- */
@@ -66,14 +119,15 @@ const TaskForm = (() => {
     document.getElementById('formTaskId').textContent  = '';
     document.getElementById('taskForm').reset();
     document.getElementById('editTaskId').value        = '';
-    document.getElementById('taskPriority').value      = getNextPriority();
+    document.getElementById('taskPriority').value      = "2"; // Baixa por padrão
     document.getElementById('taskIsCritical').checked  = false;
     document.getElementById('taskProgress').value      = 0;
     document.getElementById('taskProgressLabel').textContent = '0%';
-    document.getElementById('taskProjectType').value   = 'SISTEMAS';
     document.getElementById('formChecklistList').innerHTML = '';
     populateSelects();
     buildResourcePicker([]);
+    buildAreaPicker([]);
+    buildProjectTypePicker(['SISTEMAS']);
     App.navigate('new-task');
   }
 
@@ -93,7 +147,6 @@ const TaskForm = (() => {
     document.getElementById('taskPriority').value     = task.priority;
     document.getElementById('taskIsCritical').checked = !!task.isCritical;
     document.getElementById('taskStatus').value       = task.status;
-    document.getElementById('taskArea').value         = task.area;
     document.getElementById('taskSolicitor').value    = task.solicitor;
     document.getElementById('taskDueDate').value      = task.dueDate || '';
     document.getElementById('taskDescription').value  = task.description || '';
@@ -103,10 +156,10 @@ const TaskForm = (() => {
     document.getElementById('taskProgress').value = prog;
     document.getElementById('taskProgressLabel').textContent = prog + '%';
 
-    document.getElementById('taskProjectType').value = task.projectType || 'SISTEMAS';
-
     buildChecklistForm(task.checklist || []);
     buildResourcePicker(task.resources || []);
+    buildAreaPicker(task.area || []);
+    buildProjectTypePicker(task.projectType || []);
     App.navigate('new-task');
   }
 
@@ -117,7 +170,6 @@ const TaskForm = (() => {
     [
       { id: 'taskTitle'     },
       { id: 'taskStatus'    },
-      { id: 'taskArea'      },
       { id: 'taskSolicitor' },
     ].forEach(({ id }) => {
       const el = document.getElementById(id);
@@ -130,6 +182,26 @@ const TaskForm = (() => {
     const prioValid = prio.value !== '' && !isNaN(parseInt(prio.value)) && parseInt(prio.value) >= 0;
     prio.classList.toggle('error', !prioValid);
     if (!prioValid) ok = false;
+
+    // Validate area
+    const areas = getSelectedAreas();
+    const areaPicker = document.getElementById('areaPicker');
+    if (areas.length === 0) {
+      areaPicker.style.border = '1px solid var(--danger)';
+      ok = false;
+    } else {
+      areaPicker.style.border = 'none';
+    }
+
+    // Validate project type
+    const pTypes = getSelectedProjectTypes();
+    const pTypePicker = document.getElementById('projectTypePicker');
+    if (pTypes.length === 0) {
+      pTypePicker.style.border = '1px solid var(--danger)';
+      ok = false;
+    } else {
+      pTypePicker.style.border = 'none';
+    }
 
     return ok;
   }
@@ -181,7 +253,7 @@ const TaskForm = (() => {
       title:       document.getElementById('taskTitle').value.trim(),
       priority:    parseInt(document.getElementById('taskPriority').value),
       status:      document.getElementById('taskStatus').value,
-      area:        document.getElementById('taskArea').value,
+      area:        getSelectedAreas(),
       solicitor:   document.getElementById('taskSolicitor').value.trim(),
       dueDate:     document.getElementById('taskDueDate').value,
       description: document.getElementById('taskDescription').value.trim(),
@@ -189,7 +261,7 @@ const TaskForm = (() => {
       resources:   getSelectedResources(),
       progress:    parseInt(document.getElementById('taskProgress').value) || 0,
       isCritical:  document.getElementById('taskIsCritical').checked,
-      projectType: document.getElementById('taskProjectType').value,
+      projectType: getSelectedProjectTypes(),
       checklist:   getFormChecklist(),
     };
 
@@ -240,7 +312,7 @@ const TaskForm = (() => {
       addInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addItem(); } });
     }
 
-    ['taskTitle', 'taskPriority', 'taskStatus', 'taskArea', 'taskSolicitor'].forEach(id => {
+    ['taskTitle', 'taskPriority', 'taskStatus', 'taskSolicitor'].forEach(id => {
       const el = document.getElementById(id);
       el.addEventListener('input',  () => el.classList.remove('error'));
       el.addEventListener('change', () => el.classList.remove('error'));

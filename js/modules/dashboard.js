@@ -51,8 +51,8 @@ const Dashboard = (() => {
     // Area Chart
     const areaCounts = {};
     tasks.forEach(t => { 
-      const a = t.area || 'Outros';
-      areaCounts[a] = (areaCounts[a] || 0) + 1;
+      const areas = Array.isArray(t.area) && t.area.length > 0 ? t.area : ['Outros'];
+      areas.forEach(a => areaCounts[a] = (areaCounts[a] || 0) + 1);
     });
     const areaLabels = Object.keys(areaCounts);
     const areaData = Object.values(areaCounts);
@@ -83,8 +83,8 @@ const Dashboard = (() => {
     }
 
     // Type Chart (Sistemas vs Infraestrutura)
-    const sistCount  = tasks.filter(t => (t.projectType || 'SISTEMAS') === 'SISTEMAS').length;
-    const infraCount = tasks.filter(t => t.projectType === 'INFRAESTRUTURA').length;
+    const sistCount  = tasks.filter(t => (t.projectType || []).includes('SISTEMAS') || (!t.projectType || t.projectType.length === 0)).length;
+    const infraCount = tasks.filter(t => (t.projectType || []).includes('INFRAESTRUTURA')).length;
 
     const ctxType = document.getElementById('chartType');
     if (ctxType && ctxType.offsetParent !== null) {
@@ -137,8 +137,8 @@ const Dashboard = (() => {
       { label: 'Em Atraso',            value: overdue,   sub: 'prazo ultrapassado',           color: overdue > 0 ? '#ef4444' : '#22c55e' },
       { label: 'Concluídas no Mês',    value: doneMonth, sub: `de ${total} no total`,         color: '#22c55e' },
       { label: 'Recursos Disponíveis', value: avail,     sub: `${busy} ocupados`,             color: '#0d9488' },
-      { label: 'Projetos de Sistemas',       value: tasks.filter(t => (t.projectType || 'SISTEMAS') === 'SISTEMAS').length,        sub: 'tipo sistemas',       color: '#6366f1' },
-      { label: 'Projetos de Infraestrutura', value: tasks.filter(t => t.projectType === 'INFRAESTRUTURA').length, sub: 'tipo infraestrutura',  color: '#f97316' },
+      { label: 'Projetos de Sistemas',       value: tasks.filter(t => (t.projectType || []).includes('SISTEMAS') || (!t.projectType || t.projectType.length === 0)).length,        sub: 'tipo sistemas',       color: '#6366f1' },
+      { label: 'Projetos de Infraestrutura', value: tasks.filter(t => (t.projectType || []).includes('INFRAESTRUTURA')).length, sub: 'tipo infraestrutura',  color: '#f97316' },
     ];
 
     document.getElementById('metricsGrid').innerHTML = cards.map(c => `
@@ -161,7 +161,7 @@ const Dashboard = (() => {
 
     const fArea = document.getElementById('filterArea');
     const curArea = fArea.value;
-    const areas = [...new Set(tasks.map(t => t.area).filter(Boolean))].sort();
+    const areas = [...new Set(tasks.flatMap(t => t.area || []))].filter(Boolean).sort();
     fArea.innerHTML = '<option value="">Todas as Áreas</option>' +
       areas.map(a => `<option value="${a}" ${curArea === a ? 'selected' : ''}>${a}</option>`).join('');
 
@@ -193,10 +193,10 @@ const Dashboard = (() => {
         if (currentTab === 'active' && !status && t.status === 'CONCLUIDO') return false;
         if (search && !t.title.toLowerCase().includes(search) && !t.id.toLowerCase().includes(search)) return false;
         if (status && t.status  !== status)              return false;
-        if (area   && t.area    !== area)                return false;
+        if (area   && !(t.area || []).includes(area))    return false;
         if (res    && !(t.resources || []).includes(res)) return false;
         if (sol    && t.solicitor !== sol)               return false;
-        if (ptype  && (t.projectType || 'SISTEMAS') !== ptype) return false;
+        if (ptype  && !(t.projectType || []).includes(ptype)) return false;
         return true;
       })
       .sort((a, b) => a.priority - b.priority);
@@ -217,19 +217,19 @@ const Dashboard = (() => {
          id="card-${task.id}">
       <div class="task-priority-badge">
         <span style="font-size:0.6rem;color:var(--text-3)">PRIO</span>
-        <span class="priority-num">${task.priority}</span>
+        <span class="priority-num" style="font-size: 0.9rem; margin-top: 2px;">${UI.getPriorityLabel(task.priority)}</span>
       </div>
 
       <div class="task-info">
         <div class="task-card-top">
           <span class="task-card-id">${task.id}</span>
           <span class="task-card-title">${escapeHtml(task.title)}</span>
-          ${projectTypeBadge(task.projectType || 'SISTEMAS')}
+          ${projectTypeBadge(task.projectType)}
           ${task.isCritical ? '<span class="critical-badge" style="background:var(--danger); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.65rem; font-weight:700;">⚡ CRÍTICA</span>' : ''}
           ${overdue ? '<span class="overdue-badge">⚠ Atrasada</span>' : ''}
         </div>
         <div class="task-card-meta">
-          <span class="task-meta-item"><span class="meta-icon">🏢</span>${escapeHtml(task.area)}</span>
+          <span class="task-meta-item"><span class="meta-icon">🏢</span>${escapeHtml((task.area || []).join(', '))}</span>
           <span class="task-meta-item"><span class="meta-icon">👤</span>${escapeHtml(task.solicitor)}</span>
           <span class="task-meta-item"><span class="meta-icon">📅</span>${dueStr}</span>
         </div>
@@ -287,10 +287,10 @@ const Dashboard = (() => {
       .filter(t => {
         if (t.status !== 'CONCLUIDO') return false;
         if (search && !t.title.toLowerCase().includes(search) && !t.id.toLowerCase().includes(search)) return false;
-        if (area  && t.area      !== area)                     return false;
+        if (area  && !(t.area || []).includes(area))           return false;
         if (res   && !(t.resources || []).includes(res))       return false;
         if (sol   && t.solicitor !== sol)                      return false;
-        if (ptype && (t.projectType || 'SISTEMAS') !== ptype)  return false;
+        if (ptype && !(t.projectType || []).includes(ptype))   return false;
         return true;
       })
       .sort((a, b) => {
@@ -335,16 +335,16 @@ const Dashboard = (() => {
              id="card-arch-${task.id}">
           <div class="task-priority-badge">
             <span style="font-size:0.6rem;color:var(--text-3)">PRIO</span>
-            <span class="priority-num">${task.priority}</span>
+            <span class="priority-num" style="font-size: 0.9rem; margin-top: 2px;">${UI.getPriorityLabel(task.priority)}</span>
           </div>
           <div class="task-info">
             <div class="task-card-top">
               <span class="task-card-id">${task.id}</span>
               <span class="task-card-title">${escapeHtml(task.title)}</span>
-              ${projectTypeBadge(task.projectType || 'SISTEMAS')}
+              ${projectTypeBadge(task.projectType)}
             </div>
             <div class="task-card-meta">
-              <span class="task-meta-item"><span class="meta-icon">🏢</span>${escapeHtml(task.area)}</span>
+              <span class="task-meta-item"><span class="meta-icon">🏢</span>${escapeHtml((task.area || []).join(', '))}</span>
               <span class="task-meta-item"><span class="meta-icon">👤</span>${escapeHtml(task.solicitor)}</span>
               <span class="archive-closed-badge">✅ Concluído em ${closedStr}</span>
             </div>
@@ -490,11 +490,15 @@ function escapeHtml(str) {
 /* ============================================================
    Badge de tipo de projeto (global – usado por Dashboard e TaskModal)
 ============================================================ */
-function projectTypeBadge(type) {
-  if (type === 'INFRAESTRUTURA') {
-    return '<span class="project-type-badge pt-infra">🔧 Infraestrutura</span>';
-  }
-  return '<span class="project-type-badge pt-sistemas">💻 Sistemas</span>';
+function projectTypeBadge(typeArray) {
+  const types = typeArray || [];
+  if (types.length === 0) return '<span class="project-type-badge pt-sistemas">💻 Sistemas</span>';
+  return types.map(type => {
+    if (type === 'INFRAESTRUTURA') {
+      return '<span class="project-type-badge pt-infra" style="margin-right: 4px;">🔧 Infraestrutura</span>';
+    }
+    return '<span class="project-type-badge pt-sistemas" style="margin-right: 4px;">💻 Sistemas</span>';
+  }).join('');
 }
 
 /* ============================================================
@@ -704,18 +708,18 @@ const TaskModal = (() => {
           </div>
           <div class="modal-field">
             <span class="modal-field-label">Tipo de Projeto</span>
-            <span class="modal-field-value">${projectTypeBadge(task.projectType || 'SISTEMAS')}</span>
+            <span class="modal-field-value">${projectTypeBadge(task.projectType)}</span>
           </div>
           <div class="modal-field">
             <span class="modal-field-label">Prioridade</span>
             <span class="modal-field-value" style="font-size:1.2rem;font-weight:800; display:flex; align-items:center; gap:8px;">
-              ${task.priority}
+              ${UI.getPriorityLabel(task.priority)}
               ${task.isCritical ? '<span style="background:var(--danger); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.7rem;">⚡ CRÍTICA</span>' : ''}
             </span>
           </div>
           <div class="modal-field">
             <span class="modal-field-label">Área Solicitante</span>
-            <span class="modal-field-value">${escapeHtml(task.area)}</span>
+            <span class="modal-field-value">${escapeHtml((task.area || []).join(', '))}</span>
           </div>
           <div class="modal-field">
             <span class="modal-field-label">Solicitante</span>

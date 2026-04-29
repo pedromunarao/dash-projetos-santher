@@ -141,6 +141,17 @@ app.use('/api', (req, res, next) => {
    HELPERS
 ============================================================ */
 
+function safeJsonParseArray(str) {
+  if (!str) return [];
+  try {
+    const parsed = JSON.parse(str);
+    if (Array.isArray(parsed)) return parsed;
+    return [parsed];
+  } catch (e) {
+    return [str];
+  }
+}
+
 function rowToTask(row) {
   if (!row) return null;
   return {
@@ -149,7 +160,7 @@ function rowToTask(row) {
     description: row.description || '',
     priority:    row.priority,
     status:      row.status,
-    area:        row.area || '',
+    area:        safeJsonParseArray(row.area || '[]'),
     solicitor:   row.solicitor || '',
     resources:   JSON.parse(row.resources || '[]'),
     openedAt:    row.opened_at,
@@ -161,7 +172,7 @@ function rowToTask(row) {
     checklist:   JSON.parse(row.checklist || '[]'),
     comments:    JSON.parse(row.comments  || '[]'),
     isCritical:  !!row.is_critical,
-    projectType: row.project_type || 'SISTEMAS',
+    projectType: safeJsonParseArray(row.project_type || '[]'),
   };
 }
 
@@ -230,7 +241,7 @@ app.post('/api/tasks', (req, res) => {
       d.description || '',
       Number(d.priority) || 0,
       d.status || 'PENDENTE',
-      d.area || '',
+      JSON.stringify(d.area || []),
       d.solicitor || '',
       JSON.stringify(d.resources || []),
       now,
@@ -242,7 +253,7 @@ app.post('/api/tasks', (req, res) => {
       JSON.stringify(d.checklist || []),
       JSON.stringify(d.comments  || []),
       d.isCritical ? 1 : 0,
-      d.projectType === 'INFRAESTRUTURA' ? 'INFRAESTRUTURA' : 'SISTEMAS',
+      JSON.stringify(d.projectType || []),
     ]
   );
 
@@ -261,14 +272,22 @@ app.put('/api/tasks/:id', (req, res) => {
   if (d.title       !== undefined && d.title       !== old.title)       changes.push(`Título: "${old.title}" → "${d.title}"`);
   if (d.status      !== undefined && d.status      !== old.status)      changes.push(`Status: ${getStatusLabel(old.status)} → ${getStatusLabel(d.status)}`);
   if (d.priority    !== undefined && String(d.priority) !== String(old.priority)) changes.push(`Prioridade: ${old.priority} → ${d.priority}`);
-  if (d.area        !== undefined && d.area        !== old.area)        changes.push(`Área: ${old.area} → ${d.area}`);
+  if (d.area        !== undefined) {
+    const oldA = safeJsonParseArray(old.area || '[]').join(', ');
+    const newA = (d.area || []).join(', ');
+    if (oldA !== newA) changes.push(`Área: [${oldA || '—'}] → [${newA || '—'}]`);
+  }
   if (d.solicitor   !== undefined && d.solicitor   !== old.solicitor)   changes.push(`Solicitante: ${old.solicitor} → ${d.solicitor}`);
   if (d.dueDate     !== undefined && d.dueDate     !== old.due_date)    changes.push(`Data prevista: ${old.due_date || '—'} → ${d.dueDate || '—'}`);
   if (d.notes       !== undefined && d.notes       !== old.notes)       changes.push('Observações atualizadas.');
   if (d.description !== undefined && d.description !== old.description) changes.push('Descrição atualizada.');
   if (d.progress    !== undefined && Number(d.progress) !== old.progress) changes.push(`Progresso: ${old.progress || 0}% → ${d.progress}%`);
   if (d.isCritical   !== undefined && !!d.isCritical !== !!old.is_critical) changes.push(`Marcada como ${d.isCritical ? 'Crítica' : 'Normal'}`);
-  if (d.projectType  !== undefined && d.projectType !== old.project_type)   changes.push(`Tipo: ${old.project_type || 'SISTEMAS'} → ${d.projectType}`);
+  if (d.projectType  !== undefined) {
+    const oldP = safeJsonParseArray(old.project_type || '[]').join(', ');
+    const newP = (d.projectType || []).join(', ');
+    if (oldP !== newP) changes.push(`Tipo: [${oldP || '—'}] → [${newP || '—'}]`);
+  }
   if (d.resources   !== undefined) {
     const oldR = JSON.parse(old.resources || '[]').join(', ');
     const newR = (d.resources || []).join(', ');
@@ -298,7 +317,7 @@ app.put('/api/tasks/:id', (req, res) => {
       d.description !== undefined ? d.description         : old.description,
       d.priority    !== undefined ? Number(d.priority)    : old.priority,
       newStatus,
-      d.area        !== undefined ? d.area                : old.area,
+      d.area        !== undefined ? JSON.stringify(d.area) : old.area,
       d.solicitor   !== undefined ? d.solicitor           : old.solicitor,
       d.resources   !== undefined ? JSON.stringify(d.resources) : old.resources,
       d.dueDate     !== undefined ? d.dueDate             : old.due_date,
@@ -309,7 +328,7 @@ app.put('/api/tasks/:id', (req, res) => {
       d.checklist   !== undefined ? JSON.stringify(d.checklist) : (old.checklist || '[]'),
       d.comments    !== undefined ? JSON.stringify(d.comments)  : (old.comments  || '[]'),
       d.isCritical  !== undefined ? (d.isCritical ? 1 : 0)      : (old.is_critical || 0),
-      d.projectType !== undefined ? (d.projectType === 'INFRAESTRUTURA' ? 'INFRAESTRUTURA' : 'SISTEMAS') : (old.project_type || 'SISTEMAS'),
+      d.projectType !== undefined ? JSON.stringify(d.projectType) : old.project_type,
       id,
     ]
   );
