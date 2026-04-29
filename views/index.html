@@ -91,6 +91,10 @@
         <span class="theme-icon">🌙</span>
         <span class="nav-label">Tema Escuro</span>
       </button>
+      <button class="nav-item" id="switchWorkspaceBtn" title="Trocar Workspace" style="color: var(--accent);">
+        <span class="nav-icon">🔀</span>
+        <span class="nav-label">Trocar Workspace</span>
+      </button>
       <button class="nav-item logout-btn" id="logoutBtn" title="Sair">
         <span class="nav-icon">🚪</span>
         <span class="nav-label">Sair</span>
@@ -109,6 +113,10 @@
         <h1 class="page-title" id="pageTitle">Dashboard</h1>
       </div>
       <div class="topbar-right">
+        <div class="topbar-workspace" id="topbarWorkspace" style="display:none">
+          <span style="font-size:0.7rem; color:var(--text-3); margin-right:4px;">🗂️ WORKSPACE</span>
+          <span id="topbarWorkspaceName" style="font-size:0.82rem; font-weight:700; color:var(--accent);"></span>
+        </div>
         <span class="current-date" id="currentDate"></span>
         <div class="topbar-user" id="topbarUser">
           <span class="topbar-user-icon">👤</span>

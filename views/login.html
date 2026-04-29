@@ -126,7 +126,7 @@
           document.querySelector('.login-card').style.transition = 'opacity 0.3s, transform 0.3s';
           document.querySelector('.login-card').style.opacity = '0';
           document.querySelector('.login-card').style.transform = 'scale(0.97)';
-          setTimeout(() => { window.location.href = '/'; }, 300);
+          setTimeout(() => { window.location.href = '/workspace'; }, 300);
         } else {
           const data = await res.json().catch(() => ({}));
           showError(data.error || 'Usuário ou senha inválidos.');

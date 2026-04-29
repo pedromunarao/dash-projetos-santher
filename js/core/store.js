@@ -23,6 +23,8 @@ const Store = (() => {
     resourceTypes: ['PROGRAMADOR', 'ANALISTA'],
     statuses:      [],
     areas:         [],
+    workspaceId:   null,
+    workspaceName: null,
   };
 
   /* ---- Base URL da API ---- */
@@ -59,6 +61,8 @@ const Store = (() => {
       _cache.resourceTypes = data.resourceTypes || ['PROGRAMADOR', 'ANALISTA'];
       _cache.statuses      = data.statuses      || [];
       _cache.areas         = data.areas         || [];
+      _cache.workspaceId   = data.workspaceId   || null;
+      _cache.workspaceName = data.workspaceName || null;
     } catch (e) {
       console.error('[Store] Falha no bootstrap:', e.message);
     }
@@ -200,6 +204,9 @@ const Store = (() => {
     api('PUT', '/api/prefs/theme', { value: t }).catch(() => {});
   }
 
+  function getWorkspaceId()   { return _cache.workspaceId; }
+  function getWorkspaceName() { return _cache.workspaceName; }
+
   /* ---- API pública ---- */
   return {
     bootstrap,
@@ -214,5 +221,7 @@ const Store = (() => {
     getStatuses, saveStatuses, addStatus, updateStatus, deleteStatus, reorderStatuses,
     // UI prefs
     getSidebarCollapsed, setSidebarCollapsed, getTheme, setTheme,
+    // Workspace
+    getWorkspaceId, getWorkspaceName,
   };
 })();

@@ -1,13 +1,3 @@
-/**
- * js/modules/auth.js
- * Módulo de autenticação do frontend.
- *
- * Responsabilidades:
- *  – Verificar sessão ativa (redireciona para /login se 401)
- *  – Expor o usuário logado para os demais módulos
- *  – Realizar logout
- */
-
 const Auth = (() => {
 
   let _currentUser = null;
@@ -22,14 +12,21 @@ const Auth = (() => {
       const res = await fetch('/api/auth/me');
       if (res.status === 401) {
         window.location.href = '/login';
-        // Lança para interromper o init() do app
         throw new Error('NOT_AUTHENTICATED');
       }
       const data = await res.json();
       _currentUser = data.user;
+
+      // Verifica se há workspace selecionado na sessão
+      const wsRes = await fetch('/api/bootstrap');
+      if (wsRes.status === 403) {
+        window.location.href = '/workspace';
+        throw new Error('NO_WORKSPACE');
+      }
+
       return _currentUser;
     } catch (err) {
-      if (err.message === 'NOT_AUTHENTICATED') throw err;
+      if (err.message === 'NOT_AUTHENTICATED' || err.message === 'NO_WORKSPACE') throw err;
       // Erro de rede – redireciona por segurança
       window.location.href = '/login';
       throw new Error('NOT_AUTHENTICATED');

@@ -1,0 +1,368 @@
+/* =============================================
+   workspace.css – Tela de Seleção de Workspace
+   Mesma base visual do login.css
+   ============================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg-base:    #0f1117;
+  --bg-surface: #1a1d27;
+  --bg-card:    #20232f;
+  --bg-hover:   #282b38;
+  --border:     rgba(255,255,255,0.07);
+  --accent:     #6366f1;
+  --accent-2:   #818cf8;
+  --success:    #22c55e;
+  --danger:     #ef4444;
+  --text-1:     #f1f5f9;
+  --text-2:     #94a3b8;
+  --text-3:     #64748b;
+  --radius:     14px;
+  --shadow-lg:  0 24px 60px rgba(0,0,0,0.55);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* ---- Fundo animado ---- */
+.ws-bg {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99,102,241,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 80%,  rgba(99,102,241,0.10) 0%, transparent 60%),
+    var(--bg-base);
+}
+
+/* ---- Container ---- */
+.ws-container {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 940px;
+  padding: 48px 24px 80px;
+}
+
+/* ---- Header ---- */
+.ws-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.ws-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.ws-logo-img {
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(99,102,241,0.35));
+}
+
+.ws-brand {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: -0.3px;
+}
+.ws-brand strong { color: var(--text-1); font-weight: 800; }
+
+.ws-title {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-1);
+  margin-bottom: 8px;
+}
+
+.ws-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-3);
+}
+
+.ws-user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 0.82rem;
+  color: var(--accent-2);
+  margin-top: 14px;
+}
+
+/* ---- Grid de workspaces ---- */
+.ws-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+/* ---- Card de workspace ---- */
+.ws-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.18s, box-shadow 0.2s, background 0.2s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ws-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(99,102,241,0.15);
+}
+
+.ws-card.selected {
+  border-color: var(--accent);
+  background: rgba(99,102,241,0.08);
+}
+
+.ws-card-icon {
+  font-size: 1.9rem;
+  margin-bottom: 4px;
+}
+
+.ws-card-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-1);
+}
+
+.ws-card-meta {
+  font-size: 0.78rem;
+  color: var(--text-3);
+}
+
+.ws-lock-badge {
+  position: absolute;
+  top: 14px; right: 14px;
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* ---- Painel de senha do workspace ---- */
+.ws-pass-panel {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 28px;
+  animation: fadeIn 0.2s ease;
+}
+
+.ws-pass-panel-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ws-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.ws-input {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-1);
+  font-family: inherit;
+  font-size: 0.92rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ws-input:focus { border-color: var(--accent); }
+.ws-input.error { border-color: var(--danger); }
+
+/* ---- Erro ---- */
+.ws-error {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 9px;
+  padding: 10px 14px;
+  font-size: 0.84rem;
+  color: #f87171;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.ws-error.visible { display: flex; }
+
+/* ---- Botões ---- */
+.ws-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 11px 22px;
+  transition: background 0.18s, transform 0.15s, opacity 0.18s;
+}
+
+.ws-btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.ws-btn-primary:hover { background: #5457d6; transform: translateY(-1px); }
+
+.ws-btn-ghost {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-2);
+}
+.ws-btn-ghost:hover { background: var(--bg-hover); color: var(--text-1); }
+
+.ws-btn-danger {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: #f87171;
+}
+.ws-btn-danger:hover { background: rgba(239,68,68,0.22); }
+
+.ws-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+.ws-btn .spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.ws-btn.loading .spinner { display: block; }
+.ws-btn.loading .btn-text { opacity: 0.5; }
+
+/* ---- Separador ---- */
+.ws-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 24px;
+  color: var(--text-3);
+  font-size: 0.8rem;
+}
+.ws-divider::before, .ws-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ---- Formulário de novo workspace ---- */
+.ws-new-form {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: none;
+}
+.ws-new-form.open { display: block; animation: fadeIn 0.22s ease; }
+
+.ws-new-form-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ws-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.ws-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ws-form-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ws-form-group .hint {
+  font-size: 0.73rem;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.ws-form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* ---- Footer ---- */
+.ws-footer {
+  text-align: center;
+  margin-top: 40px;
+  font-size: 0.78rem;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* ---- Animações ---- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Responsivo ---- */
+@media (max-width: 600px) {
+  .ws-title { font-size: 1.5rem; }
+  .ws-form-grid { grid-template-columns: 1fr; }
+}

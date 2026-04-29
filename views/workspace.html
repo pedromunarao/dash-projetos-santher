@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Seleção de Workspace – Priority Manager Santher" />
+  <title>Workspace – Priority Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/pages/workspace.css" />
+  <link rel="icon" type="image/png" href="assets/santher-logo-icon.png" />
+</head>
+
+<body>
+
+  <div class="ws-bg"></div>
+
+  <div class="ws-container">
+
+    <!-- Header -->
+    <div class="ws-header">
+      <div class="ws-logo-wrap">
+        <img src="assets/santher_logo.png" alt="Santher" class="ws-logo-img" />
+        <span class="ws-brand">Priority<strong>Manager</strong></span>
+      </div>
+      <h1 class="ws-title">Selecione um Workspace</h1>
+      <p class="ws-subtitle">Escolha o ambiente de trabalho que deseja acessar</p>
+      <div class="ws-user-badge" id="userBadge">
+        👤 <span id="userBadgeName">carregando...</span>
+      </div>
+    </div>
+
+    <!-- Erro global -->
+    <div class="ws-error" id="wsError">
+      <span>⚠️</span>
+      <span id="wsErrorMsg">Erro.</span>
+    </div>
+
+    <!-- Grid de workspaces -->
+    <div class="ws-grid" id="wsGrid">
+      <!-- populado via JS -->
+    </div>
+
+    <!-- Painel de senha (aparece ao clicar num workspace protegido) -->
+    <div class="ws-pass-panel" id="wsPassPanel" style="display:none">
+      <div class="ws-pass-panel-title">🔒 <span id="wsPassPanelName">Workspace</span> requer senha</div>
+      <div class="ws-field">
+        <input type="password" id="wsPassInput" class="ws-input" placeholder="Digite a senha do workspace" />
+        <button class="ws-btn ws-btn-primary" id="wsPassConfirmBtn" onclick="confirmJoin()">
+          <span class="btn-text">Entrar</span>
+          <div class="spinner"></div>
+        </button>
+        <button class="ws-btn ws-btn-ghost" onclick="cancelJoin()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Painel de exclusão -->
+    <div class="ws-pass-panel" id="wsDeletePanel" style="display:none; border-color:var(--danger);">
+      <div class="ws-pass-panel-title" style="color:var(--danger)">🗑️ Excluir <span id="wsDeletePanelName">Workspace</span></div>
+      <p style="font-size:0.8rem; color:var(--text-3); margin-bottom:12px;">Atenção: Todos os dados serão apagados permanentemente. Digite sua senha de administrador para confirmar.</p>
+      <div class="ws-field">
+        <input type="password" id="wsDeleteInput" class="ws-input" placeholder="Senha de administrador" />
+        <button class="ws-btn ws-btn-danger" id="wsDeleteConfirmBtn" onclick="confirmDelete()">
+          <span class="btn-text">Excluir</span>
+          <div class="spinner"></div>
+        </button>
+        <button class="ws-btn ws-btn-ghost" onclick="cancelDelete()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Separador -->
+    <div class="ws-divider" id="wsDivider">ou</div>
+
+    <!-- Botão de criar novo workspace (somente admins) -->
+    <div id="wsAdminArea" style="display:none">
+      <div style="display:flex; justify-content:center; margin-bottom:20px;">
+        <button class="ws-btn ws-btn-ghost" id="wsNewBtn" onclick="toggleNewForm()">
+          ＋ Criar Novo Workspace
+        </button>
+      </div>
+
+      <!-- Formulário de novo workspace -->
+      <div class="ws-new-form" id="wsNewForm">
+        <div class="ws-new-form-title">🏗️ Novo Workspace</div>
+        <div class="ws-form-grid">
+          <div class="ws-form-group">
+            <label for="wsNewName">Nome do Workspace *</label>
+            <input type="text" id="wsNewName" class="ws-input" placeholder="Ex: Marketing, Logística..." maxlength="60" />
+          </div>
+          <div class="ws-form-group">
+            <label for="wsNewPass">Senha (opcional)</label>
+            <input type="password" id="wsNewPass" class="ws-input" placeholder="Deixe em branco para sem senha" />
+            <span class="hint">Se informada, usuários precisarão desta senha para entrar.</span>
+          </div>
+        </div>
+        <div class="ws-form-actions">
+          <button class="ws-btn ws-btn-ghost" onclick="toggleNewForm()">Cancelar</button>
+          <button class="ws-btn ws-btn-primary" id="wsCreateBtn" onclick="createWorkspace()">
+            <span class="btn-text">Criar Workspace</span>
+            <div class="spinner"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="ws-footer">
+      <span>Priority Manager · TI Santher</span>
+      <span>·</span>
+      <button class="ws-btn ws-btn-danger" style="padding:5px 14px; font-size:0.78rem;" onclick="logout()">Sair da conta</button>
+    </div>
+
+  </div>
+
+  <script>
+    let workspaces = [];
+    let selectedWsId = null;
+    let isAdmin = false;
+
+    /* ---- Inicialização ---- */
+    async function init() {
+      try {
+        // Verifica usuário logado
+        const meRes = await fetch('/api/auth/me');
+        if (!meRes.ok) { window.location.href = '/login'; return; }
+        const { user } = await meRes.json();
+        document.getElementById('userBadgeName').textContent = user.username;
+        isAdmin = user.role === 'admin';
+
+        if (isAdmin) {
+          document.getElementById('wsAdminArea').style.display = 'block';
+        }
+
+        await loadWorkspaces();
+      } catch {
+        showError('Erro de conexão com o servidor.');
+      }
+    }
+
+    async function loadWorkspaces() {
+      const res = await fetch('/api/workspaces');
+      if (!res.ok) { showError('Não foi possível carregar os workspaces.'); return; }
+      workspaces = await res.json();
+      renderGrid();
+    }
+
+    /* ---- Renderiza os cards ---- */
+    function renderGrid() {
+      const grid = document.getElementById('wsGrid');
+
+      if (workspaces.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-3)">
+            <div style="font-size:2.5rem; margin-bottom:12px">🏗️</div>
+            <p>Nenhum workspace disponível.<br>Crie um novo workspace para começar.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = workspaces.map(ws => `
+        <div class="ws-card" id="wsCard-${ws.id}" onclick="selectWorkspace('${ws.id}')" style="display:flex; flex-direction:column; justify-content:space-between;">
+          ${ws.hasPassword ? '<span class="ws-lock-badge">🔒 Senha</span>' : ''}
+          <div style="flex:1;">
+            <div class="ws-card-icon">🗂️</div>
+            <div class="ws-card-name">${escHtml(ws.name)}</div>
+            <div class="ws-card-meta">Criado em ${formatDate(ws.createdAt)}</div>
+          </div>
+          ${isAdmin && ws.id !== 'padrao' ? `<button class="ws-btn ws-btn-danger" style="margin-top:16px; padding:6px; font-size:13px; width:100%; border-radius:6px; z-index:10; cursor:pointer;" onclick="event.stopPropagation(); showDeletePanel('${ws.id}', '${escHtml(ws.name)}')">🗑️ Excluir Workspace</button>` : ''}
+        </div>
+      `).join('');
+    }
+
+    /* ---- Selecionar workspace ---- */
+    function selectWorkspace(id) {
+      // Desmarca o anterior
+      if (selectedWsId) {
+        document.getElementById(`wsCard-${selectedWsId}`)?.classList.remove('selected');
+      }
+      selectedWsId = id;
+      document.getElementById(`wsCard-${id}`)?.classList.add('selected');
+
+      const ws = workspaces.find(w => w.id === id);
+      hideError();
+      cancelPassPanel();
+      cancelDelete();
+
+      if (ws.hasPassword) {
+        showPassPanel(ws);
+      } else {
+        joinWorkspace(id, null);
+      }
+    }
+
+    /* ---- Painel de senha ---- */
+    function showPassPanel(ws) {
+      document.getElementById('wsPassPanelName').textContent = ws.name;
+      document.getElementById('wsPassInput').value = '';
+      document.getElementById('wsPassInput').classList.remove('error');
+      document.getElementById('wsPassPanel').style.display = 'block';
+      setTimeout(() => document.getElementById('wsPassInput').focus(), 80);
+    }
+
+    function cancelJoin() {
+      cancelPassPanel();
+      if (selectedWsId) {
+        document.getElementById(`wsCard-${selectedWsId}`)?.classList.remove('selected');
+        selectedWsId = null;
+      }
+    }
+
+    function cancelPassPanel() {
+      document.getElementById('wsPassPanel').style.display = 'none';
+    }
+
+    async function confirmJoin() {
+      const password = document.getElementById('wsPassInput').value;
+      if (!password) {
+        document.getElementById('wsPassInput').classList.add('error');
+        return;
+      }
+      await joinWorkspace(selectedWsId, password);
+    }
+
+    /* ---- Entrar no workspace ---- */
+    async function joinWorkspace(id, password) {
+      const btn = document.getElementById('wsPassConfirmBtn');
+      if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+      hideError();
+
+      try {
+        const res = await fetch(`/api/workspaces/${id}/join`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+
+        if (res.ok) {
+          // Animação de saída
+          document.querySelector('.ws-container').style.transition = 'opacity 0.3s, transform 0.3s';
+          document.querySelector('.ws-container').style.opacity = '0';
+          document.querySelector('.ws-container').style.transform = 'translateY(-12px)';
+          setTimeout(() => { window.location.href = '/'; }, 300);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          showError(data.error || 'Não foi possível entrar no workspace.');
+          document.getElementById('wsPassInput')?.classList.add('error');
+          if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+        }
+      } catch {
+        showError('Erro de conexão.');
+        if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+      }
+    }
+
+    /* ---- Criar novo workspace ---- */
+    function toggleNewForm() {
+      const form = document.getElementById('wsNewForm');
+      form.classList.toggle('open');
+      if (form.classList.contains('open')) {
+        setTimeout(() => document.getElementById('wsNewName').focus(), 80);
+      }
+    }
+
+    async function createWorkspace() {
+      const name     = document.getElementById('wsNewName').value.trim();
+      const password = document.getElementById('wsNewPass').value;
+
+      if (!name) {
+        document.getElementById('wsNewName').classList.add('error');
+        return;
+      }
+
+      const btn = document.getElementById('wsCreateBtn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+      hideError();
+
+      try {
+        const res = await fetch('/api/workspaces', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, password: password || undefined }),
+        });
+
+        if (res.ok) {
+          const ws = await res.json();
+          // Adiciona ao grid e entra automaticamente
+          workspaces.push({ ...ws, createdAt: new Date().toISOString() });
+          renderGrid();
+          toggleNewForm();
+          document.getElementById('wsNewName').value = '';
+          document.getElementById('wsNewPass').value = '';
+          // Entra direto no workspace recém-criado
+          joinWorkspace(ws.id, password || null);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          showError(data.error || 'Não foi possível criar o workspace.');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        }
+      } catch {
+        showError('Erro de conexão.');
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+
+    /* ---- Excluir Workspace ---- */
+    let wsToDelete = null;
+
+    function showDeletePanel(id, name) {
+      wsToDelete = id;
+      document.getElementById('wsDeletePanelName').textContent = name;
+      document.getElementById('wsDeleteInput').value = '';
+      document.getElementById('wsDeleteInput').classList.remove('error');
+      
+      cancelPassPanel();
+      document.getElementById('wsDeletePanel').style.display = 'block';
+      setTimeout(() => document.getElementById('wsDeleteInput').focus(), 80);
+    }
+
+    function cancelDelete() {
+      document.getElementById('wsDeletePanel').style.display = 'none';
+      wsToDelete = null;
+    }
+
+    async function confirmDelete() {
+      if (!wsToDelete) return;
+      const adminPassword = document.getElementById('wsDeleteInput').value;
+      if (!adminPassword) {
+        document.getElementById('wsDeleteInput').classList.add('error');
+        return;
+      }
+
+      const btn = document.getElementById('wsDeleteConfirmBtn');
+      if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+      hideError();
+
+      try {
+        const res = await fetch(`/api/workspaces/${wsToDelete}`, { 
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminPassword })
+        });
+        if (res.ok) {
+          workspaces = workspaces.filter(w => w.id !== wsToDelete);
+          if (selectedWsId === wsToDelete) {
+            cancelJoin();
+          }
+          cancelDelete();
+          renderGrid();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          showError(data.error || 'Não foi possível excluir o workspace.');
+          document.getElementById('wsDeleteInput').classList.add('error');
+        }
+      } catch {
+        showError('Erro de conexão ao excluir workspace.');
+      } finally {
+        if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+      }
+    }
+
+    /* ---- Logout ---- */
+    async function logout() {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/login';
+    }
+
+    /* ---- Helpers ---- */
+    function showError(msg) {
+      document.getElementById('wsErrorMsg').textContent = msg;
+      document.getElementById('wsError').classList.add('visible');
+    }
+
+    function hideError() {
+      document.getElementById('wsError').classList.remove('visible');
+    }
+
+    function escHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // Teclas Enter nos inputs
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('wsPassInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmJoin();
+      });
+      document.getElementById('wsDeleteInput')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmDelete();
+      });
+      document.getElementById('wsNewName').addEventListener('input', () => {
+        document.getElementById('wsNewName').classList.remove('error');
+      });
+      document.getElementById('wsDeleteInput')?.addEventListener('input', () => {
+        document.getElementById('wsDeleteInput').classList.remove('error');
+      });
+      document.getElementById('wsNewName').addEventListener('keydown', e => {
+        if (e.key === 'Enter') createWorkspace();
+      });
+
+      init();
+    });
+  </script>
+
+</body>
+</html>

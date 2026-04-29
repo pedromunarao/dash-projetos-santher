@@ -142,6 +142,23 @@ const App = (() => {
   }
 
   /* ============================================================
+     EXIBIR WORKSPACE NA TOPBAR
+  ============================================================ */
+
+  function initWorkspaceDisplay() {
+    const name = Store.getWorkspaceName();
+    if (!name) return;
+
+    const badge = document.getElementById('topbarWorkspace');
+    const nameEl = document.getElementById('topbarWorkspaceName');
+    if (badge)  badge.style.display = 'flex';
+    if (nameEl) nameEl.textContent  = name;
+
+    // Atualiza o título da aba do navegador
+    document.title = `${name} – Priority Manager`;
+  }
+
+  /* ============================================================
      EXIBIR USUÁRIO LOGADO NA TOPBAR
   ============================================================ */
 
@@ -196,6 +213,7 @@ const App = (() => {
     initTheme();
     initDate();
     initUserDisplay();
+    initWorkspaceDisplay();
 
     /* 4. Registra listeners de navegação */
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -212,6 +230,17 @@ const App = (() => {
     /* 4b. Logout */
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.addEventListener('click', () => Auth.logout());
+
+    /* 4c. Trocar workspace */
+    const switchBtn = document.getElementById('switchWorkspaceBtn');
+    if (switchBtn) {
+      switchBtn.addEventListener('click', async () => {
+        try {
+          await fetch('/api/workspaces/leave', { method: 'POST' });
+        } catch (_) { /* ignora */ }
+        window.location.href = '/workspace';
+      });
+    }
 
     /* 5. Inicializa módulos */
     Dashboard.init();
