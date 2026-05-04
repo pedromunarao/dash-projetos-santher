@@ -622,7 +622,12 @@ const TVDashboards = (() => {
       if (badge) badge.textContent = `Atualiza em ${countdown}s`;
       if (countdown <= 0) {
         countdown = refreshIntervalSeconds;
-        window.location.reload(true); // F5 forçado
+        // Soft refresh para não perder a Tela Cheia nativa do JS
+        Store.bootstrap().then(() => {
+          renderContent();
+        }).catch(err => {
+          console.error("Erro no auto-refresh:", err);
+        });
       }
     }, 1000);
   }

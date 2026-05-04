@@ -70,6 +70,19 @@
       </div>
     </div>
 
+    <!-- Painel de renomear -->
+    <div class="ws-pass-panel" id="wsRenamePanel" style="display:none; border-color:var(--primary);">
+      <div class="ws-pass-panel-title">✏️ Renomear <span id="wsRenamePanelOldName">Workspace</span></div>
+      <div class="ws-field">
+        <input type="text" id="wsRenameInput" class="ws-input" placeholder="Novo nome do workspace" maxlength="60" />
+        <button class="ws-btn ws-btn-primary" id="wsRenameConfirmBtn" onclick="confirmRename()">
+          <span class="btn-text">Salvar</span>
+          <div class="spinner"></div>
+        </button>
+        <button class="ws-btn ws-btn-ghost" onclick="cancelRename()">Cancelar</button>
+      </div>
+    </div>
+
     <!-- Separador -->
     <div class="ws-divider" id="wsDivider">ou</div>
 
@@ -167,7 +180,12 @@
             <div class="ws-card-name">${escHtml(ws.name)}</div>
             <div class="ws-card-meta">Criado em ${formatDate(ws.createdAt)}</div>
           </div>
-          ${isAdmin && ws.id !== 'padrao' ? `<button class="ws-btn ws-btn-danger" style="margin-top:16px; padding:6px; font-size:13px; width:100%; border-radius:6px; z-index:10; cursor:pointer;" onclick="event.stopPropagation(); showDeletePanel('${ws.id}', '${escHtml(ws.name)}')">🗑️ Excluir Workspace</button>` : ''}
+          ${isAdmin ? `
+            <div style="display:flex; gap:8px; margin-top:16px;">
+              <button class="ws-btn ws-btn-ghost" style="padding:6px; font-size:13px; flex:1; border-radius:6px; z-index:10; cursor:pointer; background:rgba(255,255,255,0.05);" onclick="event.stopPropagation(); showRenamePanel('${ws.id}', '${escHtml(ws.name)}')">✏️ Renomear</button>
+              ${ws.id !== 'padrao' ? `<button class="ws-btn ws-btn-danger" style="padding:6px; font-size:13px; flex:1; border-radius:6px; z-index:10; cursor:pointer;" onclick="event.stopPropagation(); showDeletePanel('${ws.id}', '${escHtml(ws.name)}')">🗑️ Excluir</button>` : ''}
+            </div>
+          ` : ''}
         </div>
       `).join('');
     }
@@ -185,6 +203,7 @@
       hideError();
       cancelPassPanel();
       cancelDelete();
+      cancelRename();
 
       if (ws.hasPassword) {
         showPassPanel(ws);
@@ -307,6 +326,65 @@
       }
     }
 
+    /* ---- Renomear Workspace ---- */
+    let wsToRename = null;
+
+    function showRenamePanel(id, name) {
+      wsToRename = id;
+      document.getElementById('wsRenamePanelOldName').textContent = name;
+      document.getElementById('wsRenameInput').value = name;
+      document.getElementById('wsRenameInput').classList.remove('error');
+      
+      cancelPassPanel();
+      cancelDelete();
+      document.getElementById('wsRenamePanel').style.display = 'block';
+      setTimeout(() => {
+        const input = document.getElementById('wsRenameInput');
+        input.focus();
+        input.select();
+      }, 80);
+    }
+
+    function cancelRename() {
+      document.getElementById('wsRenamePanel').style.display = 'none';
+      wsToRename = null;
+    }
+
+    async function confirmRename() {
+      if (!wsToRename) return;
+      const newName = document.getElementById('wsRenameInput').value.trim();
+      if (!newName) {
+        document.getElementById('wsRenameInput').classList.add('error');
+        return;
+      }
+
+      const btn = document.getElementById('wsRenameConfirmBtn');
+      if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+      hideError();
+
+      try {
+        const res = await fetch(`/api/workspaces/${wsToRename}`, { 
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        if (res.ok) {
+          const ws = workspaces.find(w => w.id === wsToRename);
+          if (ws) ws.name = newName;
+          cancelRename();
+          renderGrid();
+        } else {
+          const data = await res.json().catch(() => ({}));
+          showError(data.error || 'Não foi possível renomear o workspace.');
+          document.getElementById('wsRenameInput').classList.add('error');
+        }
+      } catch {
+        showError('Erro de conexão ao renomear workspace.');
+      } finally {
+        if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+      }
+    }
+
     /* ---- Excluir Workspace ---- */
     let wsToDelete = null;
 
@@ -317,6 +395,7 @@
       document.getElementById('wsDeleteInput').classList.remove('error');
       
       cancelPassPanel();
+      cancelRename();
       document.getElementById('wsDeletePanel').style.display = 'block';
       setTimeout(() => document.getElementById('wsDeleteInput').focus(), 80);
     }
@@ -401,6 +480,12 @@
       });
       document.getElementById('wsDeleteInput')?.addEventListener('input', () => {
         document.getElementById('wsDeleteInput').classList.remove('error');
+      });
+      document.getElementById('wsRenameInput')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter') confirmRename();
+      });
+      document.getElementById('wsRenameInput')?.addEventListener('input', () => {
+        document.getElementById('wsRenameInput').classList.remove('error');
       });
       document.getElementById('wsNewName').addEventListener('keydown', e => {
         if (e.key === 'Enter') createWorkspace();

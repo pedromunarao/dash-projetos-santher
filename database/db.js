@@ -51,15 +51,37 @@ async function initDb() {
 /* ============================================================
    PERSIST
 ============================================================ */
+let pendingGlobalSave = null;
 function persistGlobal() {
-  fs.writeFileSync(GLOBAL_DB_PATH, Buffer.from(globalDb.export()));
+  try {
+    fs.writeFileSync(GLOBAL_DB_PATH, Buffer.from(globalDb.export()));
+  } catch (err) {
+    console.error(`[DB] Erro ao persistir global.db (arquivo em uso?). Tentando novamente em breve...`, err.message);
+    if (!pendingGlobalSave) {
+      pendingGlobalSave = setTimeout(() => {
+        pendingGlobalSave = null;
+        persistGlobal();
+      }, 500);
+    }
+  }
 }
 
+let pendingWorkspaceSaves = {};
 function persistWorkspace(id) {
   const db = workspaceDbs[id];
   if (!db) return;
   const wsPath = path.join(WORKSPACES_DIR, `${id}.db`);
-  fs.writeFileSync(wsPath, Buffer.from(db.export()));
+  try {
+    fs.writeFileSync(wsPath, Buffer.from(db.export()));
+  } catch (err) {
+    console.error(`[DB] Erro ao persistir workspace ${id} (arquivo em uso?). Tentando novamente em breve...`, err.message);
+    if (!pendingWorkspaceSaves[id]) {
+      pendingWorkspaceSaves[id] = setTimeout(() => {
+        delete pendingWorkspaceSaves[id];
+        persistWorkspace(id);
+      }, 500);
+    }
+  }
 }
 
 /* ============================================================
@@ -153,9 +175,21 @@ function getWorkspaceDb(workspaceId) {
 function deleteWorkspaceDb(workspaceId) {
   delete workspaceDbs[workspaceId];
   const wsPath = path.join(WORKSPACES_DIR, `${workspaceId}.db`);
-  if (fs.existsSync(wsPath)) {
-    fs.unlinkSync(wsPath);
+  
+  function tryDelete(retries = 5) {
+    if (fs.existsSync(wsPath)) {
+      try {
+        fs.unlinkSync(wsPath);
+      } catch (err) {
+        console.error(`[DB] Erro ao excluir banco do workspace ${workspaceId}. Tentativas restantes: ${retries - 1}`, err.message);
+        if (retries > 1) {
+          setTimeout(() => tryDelete(retries - 1), 1000);
+        }
+      }
+    }
   }
+  
+  tryDelete();
 }
 
 /* ============================================================
