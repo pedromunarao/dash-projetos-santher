@@ -632,6 +632,7 @@ app.get(/^(?!\/(api|login|workspace|css|js|assets)).*/, (req, res) => {
    START
 ============================================================ */
 db.initDb().then(() => {
+  db.startAutoSave(); // ✅ auto-save a cada 30s – proteção contra perda de dados
   app.listen(PORT, () => {
     console.log('');
     console.log('  ╔══════════════════════════════════════════╗');
@@ -640,6 +641,7 @@ db.initDb().then(() => {
     console.log('');
     console.log('  Banco de dados global iniciado com sucesso.');
     console.log('  Workspaces em: database/workspaces/');
+    console.log('  Auto-save ativo: a cada 30 segundos.');
     console.log('');
   });
 }).catch(err => {

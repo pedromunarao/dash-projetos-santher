@@ -31,6 +31,30 @@ async function initDb() {
     fs.mkdirSync(WORKSPACES_DIR, { recursive: true });
   }
 
+  // ✅ TESTE DE PERMISSÃO DE ESCRITA — falha rápido e claramente
+  const testFile = path.join(WORKSPACES_DIR, '.write_test');
+  try {
+    fs.writeFileSync(testFile, 'ok');
+    fs.unlinkSync(testFile);
+    console.log('  [DB] Permissão de escrita em database/workspaces/ OK.');
+  } catch (err) {
+    const msg = [
+      '',
+      '  ❌ ERRO CRÍTICO: Sem permissão de escrita na pasta de banco de dados!',
+      `  Pasta: ${WORKSPACES_DIR}`,
+      `  Erro: ${err.message}`,
+      '',
+      '  🛠 Corrija com:',
+      `     sudo chown -R $(whoami) ${path.join(__dirname)}`,
+      `     sudo chmod -R 755 ${path.join(__dirname)}`,
+      '',
+      '  O servidor NÃO pode subir sem permissão de escrita — os dados seriam perdidos!',
+      '',
+    ].join('\n');
+    console.error(msg);
+    process.exit(1); // para o servidor — não sobe em modo so-memória silencioso
+  }
+
   // Abre/cria o banco global
   if (fs.existsSync(GLOBAL_DB_PATH)) {
     globalDb = new SQL.Database(fs.readFileSync(GLOBAL_DB_PATH));
@@ -67,14 +91,26 @@ function persistGlobal() {
 }
 
 let pendingWorkspaceSaves = {};
+let workspaceSaveFailures = {};
 function persistWorkspace(id) {
   const db = workspaceDbs[id];
   if (!db) return;
   const wsPath = path.join(WORKSPACES_DIR, `${id}.db`);
   try {
     fs.writeFileSync(wsPath, Buffer.from(db.export()));
+    workspaceSaveFailures[id] = 0; // reset contador de falhas
   } catch (err) {
-    console.error(`[DB] Erro ao persistir workspace ${id} (arquivo em uso?). Tentando novamente em breve...`, err.message);
+    workspaceSaveFailures[id] = (workspaceSaveFailures[id] || 0) + 1;
+    const failures = workspaceSaveFailures[id];
+    console.error(`[DB] ❌ Erro ao persistir workspace ${id} (tentativa ${failures}):`, err.message);
+
+    if (failures >= 3) {
+      console.error(`[DB] 🚨 FALHA CRÍTICA: não foi possível salvar workspace "${id}" após ${failures} tentativas!`);
+      console.error(`[DB] Verifique permissões em: ${WORKSPACES_DIR}`);
+      // Não agenda mais retries — evita acumular timers
+      return;
+    }
+
     if (!pendingWorkspaceSaves[id]) {
       pendingWorkspaceSaves[id] = setTimeout(() => {
         delete pendingWorkspaceSaves[id];
@@ -82,6 +118,25 @@ function persistWorkspace(id) {
       }, 500);
     }
   }
+}
+
+/* ============================================================
+   AUTO-SAVE PERIÓDICO (segurança extra – a cada 30 segundos)
+============================================================ */
+function startAutoSave() {
+  setInterval(() => {
+    try {
+      persistGlobal();
+      console.log('[DB] Auto-save global.db OK');
+    } catch (e) { /* ignorado – persistGlobal já loga */ }
+
+    Object.keys(workspaceDbs).forEach(id => {
+      try {
+        persistWorkspace(id);
+        console.log(`[DB] Auto-save workspace ${id}.db OK`);
+      } catch (e) { /* ignorado – persistWorkspace já loga */ }
+    });
+  }, 30 * 1000); // a cada 30 segundos
 }
 
 /* ============================================================
@@ -119,34 +174,42 @@ function seedGlobalDefaults() {
 
 /* ============================================================
    MIGRAÇÃO DO BANCO LEGADO → workspace "padrão"
+   TAMBÉM: re-registra o workspace padrão se global.db foi resetado
+   mas padrao.db ainda existe no disco (evita perda de dados).
 ============================================================ */
 function migrateLegacyDb() {
   const padraoDB = path.join(WORKSPACES_DIR, 'padrao.db');
 
-  // Se já existe o workspace padrão no banco global, não faz nada
+  // Verifica se o workspace padrão já está registrado no banco global
   const ws = globalGet(`SELECT id FROM workspaces WHERE id = 'padrao'`);
-  if (ws) return;
 
-  // Registra o workspace "PADRÃO" no banco global
   const adminUser = globalGet(`SELECT id FROM users WHERE username = 'admin'`);
   const ownerId = adminUser?.id || 1;
   const now = new Date().toISOString();
 
-  globalDb.run(
-    `INSERT OR IGNORE INTO workspaces (id, name, password, owner_id, created_at) VALUES (?, ?, NULL, ?, ?)`,
-    ['padrao', 'PADRÃO', ownerId, now]
-  );
-  persistGlobal();
+  if (!ws) {
+    // Registra o workspace "PADRÃO" no banco global
+    globalDb.run(
+      `INSERT OR IGNORE INTO workspaces (id, name, password, owner_id, created_at) VALUES (?, ?, NULL, ?, ?)`,
+      ['padrao', 'PADRÃO', ownerId, now]
+    );
+    persistGlobal();
 
-  // Se existe o banco legado, copia-o para workspaces/padrao.db
-  if (fs.existsSync(LEGACY_DB_PATH) && !fs.existsSync(padraoDB)) {
-    fs.copyFileSync(LEGACY_DB_PATH, padraoDB);
-    console.log('  [Workspace] Banco legado migrado para workspaces/padrao.db');
+    if (fs.existsSync(padraoDB)) {
+      // padrao.db já existe no disco → apenas re-registra, NÃO sobrescreve os dados
+      console.log('  [Workspace] global.db foi resetado, mas padrao.db já existe – re-registrando sem perder dados.');
+    } else if (fs.existsSync(LEGACY_DB_PATH)) {
+      // Migração do banco legado para workspaces/padrao.db
+      fs.copyFileSync(LEGACY_DB_PATH, padraoDB);
+      console.log('  [Workspace] Banco legado migrado para workspaces/padrao.db');
+    }
   }
 
-  // Garante que o workspace padrão tem o schema correto
+  // Garante que o workspace padrão tem o schema correto (e carrega em memória)
   getWorkspaceDb('padrao');
-  console.log('  [Workspace] Workspace "PADRÃO" inicializado.');
+  if (!ws) {
+    console.log('  [Workspace] Workspace "PADRÃO" inicializado.');
+  }
 }
 
 /* ============================================================
@@ -364,6 +427,7 @@ function makeWorkspaceHelpers(workspaceId) {
 
 module.exports = {
   initDb,
+  startAutoSave,
   // Global (users + workspaces)
   globalAll,
   globalGet,
