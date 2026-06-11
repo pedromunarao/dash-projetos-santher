@@ -6,12 +6,12 @@
  * Acesse em:    http://localhost:3000
  */
 
-const express  = require('express');
-const path     = require('path');
-const session  = require('express-session');
-const db       = require('./database/db');
+const express = require('express');
+const path = require('path');
+const session = require('express-session');
+const db = require('./database/db');
 
-const app  = express();
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -25,15 +25,15 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    maxAge: 8 * 60 * 60 * 1000, // 8 horas
+    maxAge: 8 * 60 * 60 * 1000, // 8 horas ou indefinido se for admin
   },
 }));
 
 /* ============================================================
    SERVIR ARQUIVOS ESTÁTICOS
 ============================================================ */
-app.use('/css',    express.static(path.join(__dirname, 'css')));
-app.use('/js',     express.static(path.join(__dirname, 'js')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 /* ============================================================
@@ -83,6 +83,16 @@ app.post('/api/auth/login', (req, res) => {
 
   req.session.user = { id: user.id, username: user.username, role: user.role };
   delete req.session.workspaceId; // garante que não herda workspace de sessão anterior
+
+  if (user.role === 'admin') {
+    // Se for admin, define maxAge como null (Sessão indefinida, dura até fechar o navegador)
+    // Ou você poderia colocar um valor muito alto: 365 * 24 * 60 * 60 * 1000 (1 ano)
+    req.session.cookie.maxAge = null;
+  } else {
+    // Se não for admin, garante que a sessão dura 8 horas
+    req.session.cookie.maxAge = 8 * 60 * 60 * 1000;
+  }
+
   res.json({ ok: true, user: req.session.user });
 });
 
@@ -142,10 +152,10 @@ app.delete('/api/auth/users/:id', requireAuth, requireAdmin, (req, res) => {
 app.get('/api/workspaces', requireAuth, (req, res) => {
   const rows = db.globalAll(`SELECT id, name, owner_id, created_at, (password IS NOT NULL) as has_password FROM workspaces ORDER BY created_at ASC`);
   res.json(rows.map(w => ({
-    id:         w.id,
-    name:       w.name,
-    ownerId:    w.owner_id,
-    createdAt:  w.created_at,
+    id: w.id,
+    name: w.name,
+    ownerId: w.owner_id,
+    createdAt: w.created_at,
     hasPassword: !!w.has_password,
   })));
 });
@@ -167,7 +177,7 @@ app.post('/api/workspaces', requireAuth, requireAdmin, (req, res) => {
     return res.status(409).json({ error: 'Workspace já existe.' });
 
   const hash = password ? db.bcrypt.hashSync(password, 10) : null;
-  const now  = new Date().toISOString();
+  const now = new Date().toISOString();
 
   db.globalRun(
     `INSERT INTO workspaces (id, name, password, owner_id, created_at) VALUES (?, ?, ?, ?, ?)`,
@@ -190,7 +200,7 @@ app.put('/api/workspaces/:id', requireAuth, requireAdmin, (req, res) => {
 
   let newHash = ws.password;
   if (removePassword) newHash = null;
-  else if (password)  newHash = db.bcrypt.hashSync(password, 10);
+  else if (password) newHash = db.bcrypt.hashSync(password, 10);
 
   db.globalRun(
     `UPDATE workspaces SET name = ?, password = ? WHERE id = ?`,
@@ -204,7 +214,7 @@ app.put('/api/workspaces/:id', requireAuth, requireAdmin, (req, res) => {
 app.delete('/api/workspaces/:id', requireAuth, requireAdmin, (req, res) => {
   const { id } = req.params;
   const { adminPassword } = req.body;
-  
+
   if (!adminPassword) {
     return res.status(400).json({ error: 'Senha de administrador é obrigatória para excluir o workspace.' });
   }
@@ -238,7 +248,7 @@ app.delete('/api/workspaces/:id', requireAuth, requireAdmin, (req, res) => {
 
 // Entrar num workspace
 app.post('/api/workspaces/:id/join', requireAuth, (req, res) => {
-  const { id }       = req.params;
+  const { id } = req.params;
   const { password } = req.body;
 
   const ws = db.globalGet(`SELECT * FROM workspaces WHERE id = ?`, [id]);
@@ -252,7 +262,7 @@ app.post('/api/workspaces/:id/join', requireAuth, (req, res) => {
       return res.status(401).json({ error: 'Senha do workspace incorreta.' });
   }
 
-  req.session.workspaceId   = ws.id;
+  req.session.workspaceId = ws.id;
   req.session.workspaceName = ws.name;
   res.json({ ok: true, workspaceId: ws.id, workspaceName: ws.name });
 });
@@ -268,14 +278,14 @@ app.post('/api/workspaces/leave', requireAuth, (req, res) => {
    APPLY requireAuth em todas as /api/* (exceto /api/auth/*)
 ============================================================ */
 app.use('/api', (req, res, next) => {
-  if (req.path.startsWith('/auth/'))       return next();
-  if (req.path.startsWith('/workspaces'))  return next();
+  if (req.path.startsWith('/auth/')) return next();
+  if (req.path.startsWith('/workspaces')) return next();
   return requireAuth(req, res, next);
 });
 
 // Para as rotas de dados, exige workspace selecionado e injeta helpers
 app.use('/api', (req, res, next) => {
-  if (req.path.startsWith('/auth/'))      return next();
+  if (req.path.startsWith('/auth/')) return next();
   if (req.path.startsWith('/workspaces')) return next();
   if (!req.session?.workspaceId)
     return res.status(403).json({ error: 'Nenhum workspace selecionado.' });
@@ -301,23 +311,23 @@ function safeJsonParseArray(str) {
 function rowToTask(row) {
   if (!row) return null;
   return {
-    id:          row.id,
-    title:       row.title,
+    id: row.id,
+    title: row.title,
     description: row.description || '',
-    priority:    row.priority,
-    status:      row.status,
-    area:        safeJsonParseArray(row.area || '[]'),
-    solicitor:   row.solicitor || '',
-    resources:   JSON.parse(row.resources || '[]'),
-    openedAt:    row.opened_at,
-    dueDate:     row.due_date || '',
-    closedAt:    row.closed_at || '',
-    notes:       row.notes || '',
-    history:     JSON.parse(row.history || '[]'),
-    progress:    row.progress || 0,
-    checklist:   JSON.parse(row.checklist || '[]'),
-    comments:    JSON.parse(row.comments  || '[]'),
-    isCritical:  !!row.is_critical,
+    priority: row.priority,
+    status: row.status,
+    area: safeJsonParseArray(row.area || '[]'),
+    solicitor: row.solicitor || '',
+    resources: JSON.parse(row.resources || '[]'),
+    openedAt: row.opened_at,
+    dueDate: row.due_date || '',
+    closedAt: row.closed_at || '',
+    notes: row.notes || '',
+    history: JSON.parse(row.history || '[]'),
+    progress: row.progress || 0,
+    checklist: JSON.parse(row.checklist || '[]'),
+    comments: JSON.parse(row.comments || '[]'),
+    isCritical: !!row.is_critical,
     projectType: safeJsonParseArray(row.project_type || '[]'),
   };
 }
@@ -332,17 +342,17 @@ function getStatusLabel(wsHelpers, key) {
 ============================================================ */
 app.get('/api/bootstrap', (req, res) => {
   const ws = req.ws;
-  const tasks     = ws.all(`SELECT * FROM tasks ORDER BY priority ASC`).map(rowToTask);
+  const tasks = ws.all(`SELECT * FROM tasks ORDER BY priority ASC`).map(rowToTask);
   const resources = ws.all(`SELECT * FROM resources ORDER BY name ASC`);
-  const types     = ws.all(`SELECT name FROM resource_types ORDER BY name ASC`).map(r => r.name);
-  const statuses  = ws.all(`SELECT * FROM statuses ORDER BY position ASC`);
-  const areas     = ws.all(`SELECT name FROM areas ORDER BY name ASC`).map(r => r.name);
-  const prefRows  = ws.all(`SELECT key, value FROM preferences`);
-  const prefs     = prefRows.reduce((acc, p) => { acc[p.key] = p.value; return acc; }, {});
+  const types = ws.all(`SELECT name FROM resource_types ORDER BY name ASC`).map(r => r.name);
+  const statuses = ws.all(`SELECT * FROM statuses ORDER BY position ASC`);
+  const areas = ws.all(`SELECT name FROM areas ORDER BY name ASC`).map(r => r.name);
+  const prefRows = ws.all(`SELECT key, value FROM preferences`);
+  const prefs = prefRows.reduce((acc, p) => { acc[p.key] = p.value; return acc; }, {});
 
   res.json({
     tasks, resources, resourceTypes: types, statuses, areas, prefs,
-    workspaceId:   req.session.workspaceId,
+    workspaceId: req.session.workspaceId,
     workspaceName: req.session.workspaceName,
   });
 });
@@ -376,10 +386,10 @@ app.get('/api/tasks', (req, res) => {
 });
 
 app.post('/api/tasks', (req, res) => {
-  const ws  = req.ws;
-  const d   = req.body;
+  const ws = req.ws;
+  const d = req.body;
   const now = new Date().toISOString();
-  const id  = ws.getNextTaskId();
+  const id = ws.getNextTaskId();
   const closedAt = d.status === 'CONCLUIDO' ? now : '';
 
   ws.run(
@@ -403,7 +413,7 @@ app.post('/api/tasks', (req, res) => {
       JSON.stringify([{ time: now, text: 'Tarefa criada.' }]),
       Number(d.progress) || 0,
       JSON.stringify(d.checklist || []),
-      JSON.stringify(d.comments  || []),
+      JSON.stringify(d.comments || []),
       d.isCritical ? 1 : 0,
       JSON.stringify(d.projectType || []),
     ]
@@ -413,29 +423,29 @@ app.post('/api/tasks', (req, res) => {
 });
 
 app.put('/api/tasks/:id', (req, res) => {
-  const ws     = req.ws;
+  const ws = req.ws;
   const { id } = req.params;
-  const old    = ws.get(`SELECT * FROM tasks WHERE id = ?`, [id]);
+  const old = ws.get(`SELECT * FROM tasks WHERE id = ?`, [id]);
   if (!old) return res.status(404).json({ error: 'Tarefa não encontrada.' });
 
-  const d       = req.body;
-  const now     = new Date().toISOString();
+  const d = req.body;
+  const now = new Date().toISOString();
   const changes = [];
 
-  if (d.title       !== undefined && d.title       !== old.title)       changes.push(`Título: "${old.title}" → "${d.title}"`);
-  if (d.status      !== undefined && d.status      !== old.status)      changes.push(`Status: ${getStatusLabel(ws, old.status)} → ${getStatusLabel(ws, d.status)}`);
-  if (d.priority    !== undefined && String(d.priority) !== String(old.priority)) changes.push(`Prioridade: ${old.priority} → ${d.priority}`);
+  if (d.title !== undefined && d.title !== old.title) changes.push(`Título: "${old.title}" → "${d.title}"`);
+  if (d.status !== undefined && d.status !== old.status) changes.push(`Status: ${getStatusLabel(ws, old.status)} → ${getStatusLabel(ws, d.status)}`);
+  if (d.priority !== undefined && String(d.priority) !== String(old.priority)) changes.push(`Prioridade: ${old.priority} → ${d.priority}`);
   if (d.area !== undefined) {
     const oldA = safeJsonParseArray(old.area || '[]').join(', ');
     const newA = (d.area || []).join(', ');
     if (oldA !== newA) changes.push(`Área: [${oldA || '—'}] → [${newA || '—'}]`);
   }
-  if (d.solicitor   !== undefined && d.solicitor   !== old.solicitor)   changes.push(`Solicitante: ${old.solicitor} → ${d.solicitor}`);
-  if (d.dueDate     !== undefined && d.dueDate     !== old.due_date)    changes.push(`Data prevista: ${old.due_date || '—'} → ${d.dueDate || '—'}`);
-  if (d.notes       !== undefined && d.notes       !== old.notes)       changes.push('Observações atualizadas.');
+  if (d.solicitor !== undefined && d.solicitor !== old.solicitor) changes.push(`Solicitante: ${old.solicitor} → ${d.solicitor}`);
+  if (d.dueDate !== undefined && d.dueDate !== old.due_date) changes.push(`Data prevista: ${old.due_date || '—'} → ${d.dueDate || '—'}`);
+  if (d.notes !== undefined && d.notes !== old.notes) changes.push('Observações atualizadas.');
   if (d.description !== undefined && d.description !== old.description) changes.push('Descrição atualizada.');
-  if (d.progress    !== undefined && Number(d.progress) !== old.progress) changes.push(`Progresso: ${old.progress || 0}% → ${d.progress}%`);
-  if (d.isCritical  !== undefined && !!d.isCritical !== !!old.is_critical) changes.push(`Marcada como ${d.isCritical ? 'Crítica' : 'Normal'}`);
+  if (d.progress !== undefined && Number(d.progress) !== old.progress) changes.push(`Progresso: ${old.progress || 0}% → ${d.progress}%`);
+  if (d.isCritical !== undefined && !!d.isCritical !== !!old.is_critical) changes.push(`Marcada como ${d.isCritical ? 'Crítica' : 'Normal'}`);
   if (d.projectType !== undefined) {
     const oldP = safeJsonParseArray(old.project_type || '[]').join(', ');
     const newP = (d.projectType || []).join(', ');
@@ -466,21 +476,21 @@ app.put('/api/tasks/:id', (req, res) => {
        progress = ?, checklist = ?, comments = ?, is_critical = ?, project_type = ?
      WHERE id = ?`,
     [
-      d.title       !== undefined ? d.title               : old.title,
-      d.description !== undefined ? d.description         : old.description,
-      d.priority    !== undefined ? Number(d.priority)    : old.priority,
+      d.title !== undefined ? d.title : old.title,
+      d.description !== undefined ? d.description : old.description,
+      d.priority !== undefined ? Number(d.priority) : old.priority,
       newStatus,
-      d.area        !== undefined ? JSON.stringify(d.area) : old.area,
-      d.solicitor   !== undefined ? d.solicitor           : old.solicitor,
-      d.resources   !== undefined ? JSON.stringify(d.resources) : old.resources,
-      d.dueDate     !== undefined ? d.dueDate             : old.due_date,
+      d.area !== undefined ? JSON.stringify(d.area) : old.area,
+      d.solicitor !== undefined ? d.solicitor : old.solicitor,
+      d.resources !== undefined ? JSON.stringify(d.resources) : old.resources,
+      d.dueDate !== undefined ? d.dueDate : old.due_date,
       newClosedAt,
-      d.notes       !== undefined ? d.notes               : old.notes,
+      d.notes !== undefined ? d.notes : old.notes,
       JSON.stringify(history),
-      d.progress    !== undefined ? Number(d.progress)    : (old.progress || 0),
-      d.checklist   !== undefined ? JSON.stringify(d.checklist) : (old.checklist || '[]'),
-      d.comments    !== undefined ? JSON.stringify(d.comments)  : (old.comments  || '[]'),
-      d.isCritical  !== undefined ? (d.isCritical ? 1 : 0)      : (old.is_critical || 0),
+      d.progress !== undefined ? Number(d.progress) : (old.progress || 0),
+      d.checklist !== undefined ? JSON.stringify(d.checklist) : (old.checklist || '[]'),
+      d.comments !== undefined ? JSON.stringify(d.comments) : (old.comments || '[]'),
+      d.isCritical !== undefined ? (d.isCritical ? 1 : 0) : (old.is_critical || 0),
       d.projectType !== undefined ? JSON.stringify(d.projectType) : old.project_type,
       id,
     ]
@@ -623,7 +633,7 @@ app.get('/workspace', (req, res) => {
 
 // App principal – exige login E workspace
 app.get(/^(?!\/(api|login|workspace|css|js|assets)).*/, (req, res) => {
-  if (!req.session?.user)        return res.redirect('/login');
+  if (!req.session?.user) return res.redirect('/login');
   if (!req.session?.workspaceId) return res.redirect('/workspace');
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
